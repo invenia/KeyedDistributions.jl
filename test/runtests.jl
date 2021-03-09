@@ -9,17 +9,6 @@ using Test
 @testset "KeyedDistributions.jl" begin
     # Write your tests here.
 
-    @testset "Inner keys constructor" begin
-        keys = [:a, :b]
-        m = KeyedArray([1., 2.], keys)
-        d = MvNormal(m, [1., 1.])
-        kd = KeyedDistribution(d)
-
-        @test distribution(kd) == d
-        @test axiskeys(kd) == (keys, )
-        @test mean(kd) == m
-    end
-
     @testset "Common" begin
         X = rand(MersenneTwister(1234), 10, 5)
         m = vec(mean(X; dims=1))
@@ -39,32 +28,6 @@ using Test
                 @test eltype(kd) == eltype(d) == Float64
                 @test isequal(kd, T(d, [:a, :b, :c, :d, :e]))
                 @test ==(kd, T(d, keys))
-            end
-
-            @testset "statistical functions" begin
-                @test mean(kd) isa KeyedArray{Float64, 1}
-                @test parent(mean(kd)) == mean(d) == m
-                # @test axisnames(mean(kd)) == (:variates,)
-
-                @test var(kd) isa KeyedArray{Float64, 1}
-                @test parent(var(kd)) == var(d) == diag(s)
-                # @test axisnames(var(kd)) == (:variates,)
-
-                @test cov(kd) isa KeyedArray{Float64, 2}
-                @test parent(cov(kd)) == cov(d) == s
-                # @test axisnames(cov(kd)) == (:variates, :variates_)
-
-                @test entropy(kd) isa Number
-                @test entropy(kd) == entropy(d)
-                @test entropy(kd, 2) == entropy(d, 2)
-
-                @test Distributions._logpdf(kd, m) isa Number
-                @test Distributions._logpdf(kd, m) == Distributions._logpdf(d, m)
-
-                # statistical functions commute with parent on KeyedArray/KeyedDistribution
-                for f in (mean, var, cov)
-                    @test f(parent(kd)) == parent(f(kd))
-                end
             end
 
             @testset "sampling" begin
@@ -105,6 +68,52 @@ using Test
                     # @test axisnames(observed) == (:variates, :samples)
                     @test first(axiskeys(observed)) == first(axiskeys(kd))
                 end
+            end
+        end
+    end
+
+    @testset "KeyedDistribution only" begin
+        @testset "Inner keys constructor" begin
+            keys = [:a, :b]
+            m = KeyedArray([1., 2.], keys)
+            d = MvNormal(m, [1., 1.])
+            kd = KeyedDistribution(d)
+
+            @test distribution(kd) == d
+            @test axiskeys(kd) == (keys, )
+            @test mean(kd) == m
+        end
+
+        @testset "statistical functions" begin
+            X = rand(MersenneTwister(1234), 10, 5)
+            m = vec(mean(X; dims=1))
+            s = cov(X; dims=1)
+            d = MvNormal(m, s)
+            keys = [:a, :b, :c, :d, :e]
+            kd = KeyedDistribution(d, keys)
+
+            @test mean(kd) isa KeyedArray{Float64, 1}
+            @test parent(mean(kd)) == mean(d) == m
+            # @test axisnames(mean(kd)) == (:variates,)
+
+            @test var(kd) isa KeyedArray{Float64, 1}
+            @test parent(var(kd)) == var(d) == diag(s)
+            # @test axisnames(var(kd)) == (:variates,)
+
+            @test cov(kd) isa KeyedArray{Float64, 2}
+            @test parent(cov(kd)) == cov(d) == s
+            # @test axisnames(cov(kd)) == (:variates, :variates_)
+
+            @test entropy(kd) isa Number
+            @test entropy(kd) == entropy(d)
+            @test entropy(kd, 2) == entropy(d, 2)
+
+            @test Distributions._logpdf(kd, m) isa Number
+            @test Distributions._logpdf(kd, m) == Distributions._logpdf(d, m)
+
+            # statistical functions commute with parent on KeyedArray/KeyedDistribution
+            for f in (mean, var, cov)
+                @test f(parent(kd)) == parent(f(kd))
             end
         end
     end
