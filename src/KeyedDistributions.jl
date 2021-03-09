@@ -13,12 +13,12 @@ export axiskeys, distribution
 for T in (:Distribution, :Sampleable)
     KeyedT = Symbol(:Keyed, T)
     @eval begin
-        @auto_hash_equals struct $KeyedT{F, S, D<:$T{F, S}} <: $T{F, S}
+        @auto_hash_equals struct $KeyedT{F<:VariateForm, S<:ValueSupport, D<:$T{F, S}} <: $T{F, S}
             d::D
             keys::AbstractVector
 
             """
-            $($KeyedT)(d<:$($T), keys::AbstractVector)
+                $($KeyedT)(d<:$($T), keys::AbstractVector)
 
             Stores `keys` for each variate alongside the `$($T)` `d`.
             """
