@@ -75,9 +75,7 @@ AxisKeys.axiskeys(d::KeyedDistOrSampleable) = tuple(d.keys)
 AxisKeys.axiskeys(d::Sampleable) = tuple(Base.OneTo(length(d)))
 
 # Standard functions to overload for new Distribution and/or Sampleable
-# https://juliastats.org/Distributions.jl/latest/extends/#Create-a-Distribution
-
-Distributions.sampler(d::KeyedDistOrSampleable) = sampler(keyless(d))
+# https://juliastats.org/Distributions.jl/latest/extends/#Create-New-Samplers-and-Distributions
 
 function Distributions._rand!(
     rng::AbstractRNG,
@@ -88,13 +86,14 @@ function Distributions._rand!(
     return KeyedArray(sample, axiskeys(d))
 end
 
-function Distributions._logpdf(d::KeyedDistOrSampleable, x::AbstractArray)
-    return Distributions._logpdf(parent(d), x)
-end
-
 Base.length(d::KeyedDistOrSampleable) = length(keyless(d))
 
-Base.eltype(d::KeyedDistOrSampleable) = eltype(keyless(d))
+Distributions.sampler(d::KeyedDistribution) = sampler(keyless(d))
+
+Base.eltype(d::KeyedDistribution) = eltype(keyless(d))
+
+Distributions._logpdf(d::KeyedDistribution, x::AbstractArray) =
+    Distributions._logpdf(parent(d), x)
 
 # Also need to overload `rand` methods to return a KeyedArray
 
@@ -104,16 +103,16 @@ Base.rand(rng::AbstractRNG, d::KeyedDistOrSampleable) =
 Base.rand(rng::AbstractRNG, d::KeyedDistOrSampleable, n::Int) =
     KeyedArray(rand(rng, parent(d), n), (first(axiskeys(d)), Base.OneTo(n)))
 
-# Statistics functions
+# Statistics functions for Distribution
 
-Distributions.mean(d::KeyedDistOrSampleable) = KeyedArray(mean(keyless(d)), axiskeys(d))
+Distributions.mean(d::KeyedDistribution) = KeyedArray(mean(keyless(d)), axiskeys(d))
 
-Distributions.var(d::KeyedDistOrSampleable) = KeyedArray(var(keyless(d)), axiskeys(d))
+Distributions.var(d::KeyedDistribution) = KeyedArray(var(keyless(d)), axiskeys(d))
 
-Distributions.cov(d::KeyedDistOrSampleable) =
+Distributions.cov(d::KeyedDistribution) =
     KeyedArray(cov(keyless(d)), (first(axiskeys(d)), first(axiskeys(d))))
 
-Distributions.entropy(d::KeyedDistOrSampleable) = entropy(keyless(d))
-Distributions.entropy(d::KeyedDistOrSampleable, b::Real) = entropy(keyless(d), b)
+Distributions.entropy(d::KeyedDistribution) = entropy(keyless(d))
+Distributions.entropy(d::KeyedDistribution, b::Real) = entropy(keyless(d), b)
 
 end
