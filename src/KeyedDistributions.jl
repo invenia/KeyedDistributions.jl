@@ -39,7 +39,7 @@ end
 Constructs a [`KeyedDistribution`](@ref) using keys stored in `d`.
 The keys are copied from the first axis of the first parameter in `d`.
 """
-function KeyedDistribution(d::D) where D <: Distribution
+function KeyedDistribution(d::Distribution)
     first_param = getfield(d, 1)
     keys = first(axiskeys(first_param))  # axiskeys guaranteed to be Tuple{AbstractVector}?
     return KeyedDistribution(d, keys)
