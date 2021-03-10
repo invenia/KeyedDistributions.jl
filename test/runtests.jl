@@ -36,8 +36,17 @@ using Test
 
                 rng = MersenneTwister(1)
 
-                @testset "one-sample method" begin
+                @testset "_rand!" begin
                     expected = [0.6048058078690228, 0.5560878435408364, 0.41599188102577894]
+                    observed = Distributions._rand!(rng, kd, zeros(Float64, 3))
+                    @test observed isa KeyedArray
+                    @test isapprox(observed, expected)
+                    @test isapprox(observed(:a), expected[1])
+                    @test first(axiskeys(observed)) == first(axiskeys(kd))
+                end
+
+                @testset "one-sample method" begin
+                    expected = [0.5333595810495181, 0.12636240168741192, 0.579000443516295]
                     observed = rand(rng, kd)
                     @test observed isa KeyedArray
                     @test isapprox(observed, expected)
@@ -47,9 +56,9 @@ using Test
 
                 @testset "multi-sample method" begin
                     expected = [
-                        0.5333595810495181 1.0686337176543628;
-                        0.12636240168741192 -0.44724174718706566;
-                        0.579000443516295 0.914066493850531
+                        1.0686337176543628 0.6359475064225186;
+                        -0.44724174718706566 0.6246866736932383;
+                        0.914066493850531 0.9897659744431875
                     ]
                     observed = rand(rng, kd, 2)
                     @test observed isa KeyedArray
