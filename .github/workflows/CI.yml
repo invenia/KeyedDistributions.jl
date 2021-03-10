@@ -15,8 +15,8 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - '1'
-          - '1.0'
+          - '1.5'  # Invenia Prod version
+          - '1'    # Latest Release
         os:
           - ubuntu-latest
           - macOS-latest
