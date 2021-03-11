@@ -2,7 +2,6 @@ module KeyedDistributions
 
 using AutoHashEquals
 using AxisKeys
-using AxisKeys: keyless
 using Distributions
 using Random: AbstractRNG
 
@@ -59,10 +58,6 @@ distribution(d::KeyedDistOrSampleable) = d.d
 
 # AxisKeys functionality
 
-Base.parent(d::KeyedDistOrSampleable) = d.d
-
-AxisKeys.keyless(d::KeyedDistOrSampleable) = parent(d)
-
 """
     axiskeys(s::Sampleable)
 
@@ -81,37 +76,37 @@ function Distributions._rand!(
     d::KeyedDistOrSampleable,
     x::AbstractVector{T}
 ) where T<:Real
-    sample = Distributions._rand!(rng, parent(d), x)
+    sample = Distributions._rand!(rng, distribution(d), x)
     return KeyedArray(sample, axiskeys(d))
 end
 
-Base.length(d::KeyedDistOrSampleable) = length(keyless(d))
+Base.length(d::KeyedDistOrSampleable) = length(distribution(d))
 
-Distributions.sampler(d::KeyedDistribution) = sampler(keyless(d))
+Distributions.sampler(d::KeyedDistribution) = sampler(distribution(d))
 
-Base.eltype(d::KeyedDistribution) = eltype(keyless(d))
+Base.eltype(d::KeyedDistribution) = eltype(distribution(d))
 
 Distributions._logpdf(d::KeyedDistribution, x::AbstractArray) =
-    Distributions._logpdf(parent(d), x)
+    Distributions._logpdf(distribution(d), x)
 
 # Also need to overload `rand` methods to return a KeyedArray
 
 Base.rand(rng::AbstractRNG, d::KeyedDistOrSampleable) =
-    KeyedArray(rand(rng, parent(d)), axiskeys(d))
+    KeyedArray(rand(rng, distribution(d)), axiskeys(d))
 
 Base.rand(rng::AbstractRNG, d::KeyedDistOrSampleable, n::Int) =
-    KeyedArray(rand(rng, parent(d), n), (first(axiskeys(d)), Base.OneTo(n)))
+    KeyedArray(rand(rng, distribution(d), n), (first(axiskeys(d)), Base.OneTo(n)))
 
 # Statistics functions for Distribution
 
-Distributions.mean(d::KeyedDistribution) = KeyedArray(mean(keyless(d)), axiskeys(d))
+Distributions.mean(d::KeyedDistribution) = KeyedArray(mean(distribution(d)), axiskeys(d))
 
-Distributions.var(d::KeyedDistribution) = KeyedArray(var(keyless(d)), axiskeys(d))
+Distributions.var(d::KeyedDistribution) = KeyedArray(var(distribution(d)), axiskeys(d))
 
 Distributions.cov(d::KeyedDistribution) =
-    KeyedArray(cov(keyless(d)), (first(axiskeys(d)), first(axiskeys(d))))
+    KeyedArray(cov(distribution(d)), (first(axiskeys(d)), first(axiskeys(d))))
 
-Distributions.entropy(d::KeyedDistribution) = entropy(keyless(d))
-Distributions.entropy(d::KeyedDistribution, b::Real) = entropy(keyless(d), b)
+Distributions.entropy(d::KeyedDistribution) = entropy(distribution(d))
+Distributions.entropy(d::KeyedDistribution, b::Real) = entropy(distribution(d), b)
 
 end

@@ -2,7 +2,6 @@ using AxisKeys
 using Distributions
 using KeyedDistributions
 using LinearAlgebra
-using Random
 using StableRNGs
 using Statistics
 using Test
@@ -22,8 +21,6 @@ using Test
             @testset "base functions" begin
                 @test kd isa Sampleable
                 @test distribution(kd) == d
-                @test parent(kd) == d
-                @test AxisKeys.keyless(kd) == d
                 @test axiskeys(kd) == (keys, )
                 @test length(kd) == length(d) == 3
                 @test isequal(kd, T(d, [:a, :b, :c]))
@@ -106,9 +103,9 @@ using Test
             @test Distributions._logpdf(kd, m) isa Number
             @test Distributions._logpdf(kd, m) == Distributions._logpdf(d, m)
 
-            # statistical functions commute with parent on KeyedArray/KeyedDistribution
+            # statistical functions commute with accessor methods
             for f in (mean, var, cov)
-                @test f(parent(kd)) == parent(f(kd))
+                @test f(distribution(kd)) == parent(f(kd))
             end
         end
     end
