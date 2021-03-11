@@ -11,17 +11,21 @@ using Test
     m = vec(mean(X; dims=1))
     s = cov(X; dims=1)
     d = MvNormal(m, s)
-    keys = [:a, :b, :c]
+    keys = ([:a, :b, :c], )
     kd = KeyedDistribution(d, keys)
 
     @testset "Common" begin
         @testset "$T" for T in (KeyedDistribution, KeyedSampleable)
+            @test T(d, keys[1]) isa T
+            # TODO more type tests
+            # TODO test vector keys constructor with non-variateform/support
+
             kd = T(d, keys)
 
             @testset "base functions" begin
                 @test kd isa Sampleable
                 @test distribution(kd) == d
-                @test axiskeys(kd) == (keys, )
+                @test axiskeys(kd) == keys
                 @test length(kd) == length(d) == 3
                 @test isequal(kd, T(d, [:a, :b, :c]))
                 @test ==(kd, T(d, keys))
@@ -40,7 +44,7 @@ using Test
                     @test observed isa KeyedArray
                     @test isapprox(observed, expected)
                     @test isapprox(observed(:a), expected[1])
-                    @test first(axiskeys(observed)) == first(axiskeys(kd))
+                    @test axiskeys(observed) == axiskeys(kd)
                 end
 
                 @testset "one-sample method" begin
@@ -49,7 +53,7 @@ using Test
                     @test observed isa KeyedArray
                     @test isapprox(observed, expected)
                     @test isapprox(observed(:a), expected[1])
-                    @test first(axiskeys(observed)) == first(axiskeys(kd))
+                    @test axiskeys(observed) == axiskeys(kd)
                 end
 
                 @testset "multi-sample method" begin
@@ -62,6 +66,7 @@ using Test
                     @test observed isa KeyedArray
                     @test isapprox(observed, expected)
                     @test isapprox(observed(:a), expected[1, :])
+                    @test axiskeys(observed) == (first(axiskeys(kd)), Base.OneTo(2))
                     @test first(axiskeys(observed)) == first(axiskeys(kd))
                 end
             end
@@ -74,7 +79,7 @@ using Test
 
             @test kd2 isa Distribution
             @test distribution(kd2) == d
-            @test axiskeys(kd2) == (keys, )
+            @test axiskeys(kd2) == keys
             @test mean(kd2) == m
         end
 
@@ -111,8 +116,10 @@ using Test
     end
 
     @testset "Invalid keys $T" for T in (KeyedDistribution, KeyedSampleable)
+        # Wrong number of keys
         @test_throws DimensionMismatch T(MvNormal(ones(3)), ["foo"])
-        @test_throws MethodError T(MvNormal(ones(3)), (:a, :b, :c))  # because Tuple
+        # AxisKeys requires key vectors to be AbstractVector
+        @test_throws MethodError T(MvNormal(ones(3)), (:a, :b, :c))
     end
 
 end

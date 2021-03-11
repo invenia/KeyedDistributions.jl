@@ -13,35 +13,47 @@ for T in (:Distribution, :Sampleable)
     KeyedT = Symbol(:Keyed, T)
     @eval begin
         """
-            $($KeyedT)(d<:$($T), keys::AbstractVector)
+            $($KeyedT)(d<:$($T), keys::Tuple{AbstractVector})
 
         Stores `keys` for each variate alongside the `$($T)` `d`.
+
+        The length of the `keys` tuple must be the number of dimensions, which is 1 for
+        univariate and multivariate distributions, and 2 for matrix-variate distributions.
+
+        The length of each vector in `keys` must match the length along each dimension.
         """
         @auto_hash_equals struct $KeyedT{F<:VariateForm, S<:ValueSupport, D<:$T{F, S}} <: $T{F, S}
             d::D
-            keys::AbstractVector
+            keys::Tuple{AbstractVector}
 
-            function $KeyedT(d::$T{F, S}, keys::AbstractVector) where {F, S}
-                length(d) == length(keys) || throw(DimensionMismatch(
+            function $KeyedT(d::$T{F, S}, keys::Tuple{AbstractVector}) where {F, S}
+                # TODO `size` for MatrixDistributions
+                length(d) == length(keys[1]) || throw(DimensionMismatch(
                         "number of keys ($(length(keys))) must match " *
                         "number of variates ($(length(d)))"
                     ))
                 return new{F, S, typeof(d)}(d, keys)
             end
         end
+
+        """
+            $($KeyedT)(d<:$($T), keys::AbstractVector)
+
+        Constructor for $($KeyedT) with one dimension of variates.
+        The elements of `keys` correspond to the variates of the distribution.
+        """
+        $KeyedT(d::$T{F, S}, keys::AbstractVector) where {F, S} = $KeyedT(d, (keys, ))
     end
 end
 
 """
     KeyedDistribution(d::Distribution)
 
-Constructs a [`KeyedDistribution`](@ref) using keys stored in `d`.
-The keys are copied from the first axis of the first parameter in `d`.
+Constructs a [`KeyedDistribution`](@ref) using the keys of the first field stored in `d`.
 """
 function KeyedDistribution(d::Distribution)
-    first_param = getfield(d, 1)
-    keys = first(axiskeys(first_param))  # axiskeys guaranteed to be Tuple{AbstractVector}?
-    return KeyedDistribution(d, keys)
+    first_field = getfield(d, 1)
+    return KeyedDistribution(d, axiskeys(first_field))
 end
 
 const KeyedDistOrSampleable = Union{KeyedDistribution, KeyedSampleable}
@@ -66,7 +78,7 @@ For an [`KeyedDistribution`](@ref) or [`KeyedSampleable`](@ref) this
 is the keys it was constructed with.
 For any other `Sampleable` this is equal to `1:length(s)`.
 """
-AxisKeys.axiskeys(d::KeyedDistOrSampleable) = tuple(d.keys)
+AxisKeys.axiskeys(d::KeyedDistOrSampleable) = d.keys
 
 # Standard functions to overload for new Distribution and/or Sampleable
 # https://juliastats.org/Distributions.jl/latest/extends/#Create-New-Samplers-and-Distributions
