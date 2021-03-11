@@ -132,11 +132,9 @@ using Test
             @test cov(kd) isa KeyedArray{Float64, 2}
             @test parent(cov(kd)) == cov(d) == s
 
-            @test entropy(kd) isa Number
             @test entropy(kd) == entropy(d)
             @test entropy(kd, 2) == entropy(d, 2)
 
-            @test Distributions._logpdf(kd, m) isa Number
             @test Distributions._logpdf(kd, m) == Distributions._logpdf(d, m)
 
             # statistical functions commute with accessor methods
