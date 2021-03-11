@@ -7,19 +7,39 @@ using Statistics
 using Test
 
 @testset "KeyedDistributions.jl" begin
-    X = rand(StableRNG(1234), 10, 3)
-    m = vec(mean(X; dims=1))
-    s = cov(X; dims=1)
-    d = MvNormal(m, s)
-    keys = ([:a, :b, :c], )
-    kd = KeyedDistribution(d, keys)
-
     @testset "Common" begin
-        @testset "$T" for T in (KeyedDistribution, KeyedSampleable)
-            @test T(d, keys[1]) isa T
-            # TODO more type tests
-            # TODO test vector keys constructor with non-variateform/support
+        X = rand(StableRNG(1234), 10, 3)
+        m = vec(mean(X; dims=1))
+        s = cov(X; dims=1)
+        d = MvNormal(m, s)
+        keys = ([:a, :b, :c], )
 
+        @testset "subtyping" begin
+            @test KeyedDistribution <: Distribution
+            @test KeyedDistribution <: Sampleable
+            @test <:(KeyedDistribution{F, S} where {F, S}, Distribution{F, S} where {F, S})
+            @test <:(KeyedDistribution{F, S} where {F, S}, Sampleable{F, S} where {F, S})
+
+            @test !(KeyedSampleable <: Distribution)
+            @test KeyedSampleable <: Sampleable
+            @test <:(KeyedSampleable{F, S} where {F, S}, Sampleable{F, S} where {F, S})
+
+            @test KeyedDistribution(d, keys) isa Distribution{Multivariate}
+            @test KeyedSampleable(d, keys) isa Sampleable{Multivariate}
+
+            # Input not a Distribution
+            @test_throws MethodError KeyedDistribution(X, keys)
+        end
+
+        @testset "1-dimensional constructor" begin
+            @test KeyedDistribution(d, keys[1]) isa KeyedDistribution
+            @test KeyedSampleable(d, keys[1]) isa KeyedSampleable
+
+            # Input not a Distribution
+            @test_throws MethodError KeyedDistribution(X, keys[1])
+        end
+
+        @testset "$T" for T in (KeyedDistribution, KeyedSampleable)
             kd = T(d, keys)
 
             @testset "base functions" begin
@@ -74,6 +94,13 @@ using Test
     end
 
     @testset "KeyedDistribution only" begin
+        X = rand(StableRNG(1234), 10, 3)
+        m = vec(mean(X; dims=1))
+        s = cov(X; dims=1)
+        d = MvNormal(m, s)
+        keys = ([:a, :b, :c], )
+        kd = KeyedDistribution(d, keys)
+
         @testset "Inner keys constructor" begin
             kd2 = KeyedDistribution(MvNormal(KeyedArray(m, keys), s))
 
@@ -82,8 +109,6 @@ using Test
             @test axiskeys(kd2) == keys
             @test mean(kd2) == m
         end
-
-        kd = KeyedDistribution(d, keys)
 
         @testset "base functions" begin
             @test kd isa Distribution
