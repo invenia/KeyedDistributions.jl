@@ -87,7 +87,6 @@ using Test
                     @test isapprox(observed, expected)
                     @test isapprox(observed(:a), expected[1, :])
                     @test axiskeys(observed) == (first(axiskeys(kd)), Base.OneTo(2))
-                    @test first(axiskeys(observed)) == first(axiskeys(kd))
                 end
             end
         end
@@ -147,4 +146,75 @@ using Test
         @test_throws MethodError T(MvNormal(ones(3)), (:a, :b, :c))
     end
 
+    @testset "Distributions types" begin
+        @testset "Univariate" begin
+            d = Normal(0.5, 0.2)
+            kd = KeyedDistribution(d, ["variate"])
+            rng = StableRNG(1)
+
+            @test kd isa UnivariateDistribution
+            @test axiskeys(kd) == (["variate"], )
+            @test length(kd) == 1
+
+            @test isapprox(rand(rng, kd), 0.39349598502717537)
+            @test isapprox(rand(rng, kd, 2), [0.519693102856957, 0.6505773044249047])
+        end
+
+        @testset "Matrix-variate" begin
+            d = Wishart(7.0, Matrix(1.0I, 2, 2))
+            md = KeyedDistribution(d, (["x1", "x2"], ["y1", "y2"]))
+            rng = StableRNG(1)
+
+            @test md isa MatrixDistribution
+            @test size(md) == (2, 2)
+            @test axiskeys(md) == (["x1", "x2"], ["y1", "y2"])
+
+            @testset "one-sample method" begin
+                expected = [
+                    4.297085163636559 -1.7486034270372186;
+                    -1.7486034270372186 8.375810638889545
+                ]
+                observed = rand(rng, md)
+                @test observed isa KeyedArray
+                @test isapprox(observed, expected)
+                @test isapprox(observed("x1", :), expected[1, :])
+                @test axiskeys(observed) == axiskeys(md)
+            end
+
+            @testset "multi-sample method" begin
+                expected = [
+                    [
+                        16.39083916144797 4.884197412188479;
+                        4.884197412188479 12.95839907390519
+                    ],
+                    [
+                        4.0427728985772635 -1.3588065996380645;
+                        -1.3588065996380645 11.285037150960932
+                    ]
+                ]
+                observed = rand(rng, md, 2)
+                @test observed isa KeyedArray
+                @test isapprox(observed, expected)
+                @test axiskeys(observed) == (Base.OneTo(2),)
+
+                @test observed[1] isa KeyedArray
+                @test isapprox(observed(1), expected[1])
+                @test axiskeys(observed[1]) == axiskeys(md)
+            end
+        end
+
+        @testset "Sampleable not <:Distribution" begin
+            samp = Distributions.MultinomialSampler(5, [0.5, 0.5])
+            ksamp = KeyedSampleable(samp, ["number1", "number2"])
+            rng = StableRNG(1)
+
+            @test ksamp isa Sampleable
+            @test !(ksamp isa Distribution)
+            @test axiskeys(ksamp) == (["number1", "number2"], )
+            @test length(ksamp) == 2
+
+            @test rand(rng, ksamp) == [3, 2]
+            @test rand(rng, ksamp, 2) == [1 1; 4 4]
+        end
+    end
 end
