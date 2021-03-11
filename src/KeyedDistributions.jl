@@ -21,6 +21,9 @@ for T in (:Distribution, :Sampleable)
         univariate and multivariate distributions, and 2 for matrix-variate distributions.
 
         The length of each vector in `keys` must match the length along each dimension.
+
+        The type of `keys` is restricted to be consistent with
+        AxisKeys.jl (https://github.com/mcabbott/AxisKeys.jl)
         """
         @auto_hash_equals struct $KeyedT{F<:VariateForm, S<:ValueSupport, D<:$T{F, S}} <: $T{F, S}
             d::D
@@ -43,7 +46,7 @@ for T in (:Distribution, :Sampleable)
         """
             $($KeyedT)(d<:$($T), keys::AbstractVector)
 
-        Constructor for $($KeyedT) with one dimension of variates.
+        Constructor for [`$($KeyedT)`](@ref) with one dimension of variates.
         The elements of `keys` correspond to the variates of the distribution.
         """
         $KeyedT(d::$T{F, S}, keys::AbstractVector) where {F, S} = $KeyedT(d, (keys, ))
@@ -53,7 +56,8 @@ end
 """
     KeyedDistribution(d::Distribution)
 
-Constructs a [`KeyedDistribution`](@ref) using the keys of the first field stored in `d`.
+Constructs a [`KeyedDistribution`](@ref) using the keys of the first field stored in `d`,
+or if there are no keys, `1:n` for the length `n` of each dimension.
 """
 function KeyedDistribution(d::Distribution)
     first_field = getfield(d, 1)
