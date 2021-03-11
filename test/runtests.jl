@@ -3,11 +3,12 @@ using Distributions
 using KeyedDistributions
 using LinearAlgebra
 using Random
+using StableRNGs
 using Statistics
 using Test
 
 @testset "KeyedDistributions.jl" begin
-    X = rand(MersenneTwister(1234), 10, 3)
+    X = rand(StableRNG(1234), 10, 3)
     m = vec(mean(X; dims=1))
     s = cov(X; dims=1)
     d = MvNormal(m, s)
@@ -31,13 +32,13 @@ using Test
 
             @testset "sampling" begin
                 # Samples from the distribution both wrapped and unwrapped should be the same.
-                @test rand(MersenneTwister(1), d) == rand(MersenneTwister(1), kd)
-                @test rand(MersenneTwister(1), d, 3) == rand(MersenneTwister(1), kd, 3)
+                @test rand(StableRNG(1), d) == rand(StableRNG(1), kd)
+                @test rand(StableRNG(1), d, 3) == rand(StableRNG(1), kd, 3)
 
-                rng = MersenneTwister(1)
+                rng = StableRNG(1)
 
                 @testset "_rand!" begin
-                    expected = [0.6048058078690228, 0.5560878435408364, 0.41599188102577894]
+                    expected = [0.4209843517343097, 0.40546557072031986, 0.5573596971895245]
                     observed = Distributions._rand!(rng, kd, zeros(Float64, 3))
                     @test observed isa KeyedArray
                     @test isapprox(observed, expected)
@@ -46,7 +47,7 @@ using Test
                 end
 
                 @testset "one-sample method" begin
-                    expected = [0.5333595810495181, 0.12636240168741192, 0.579000443516295]
+                    expected = [0.3308452209411066, -0.10785874526873923, 0.3177486760818843]
                     observed = rand(rng, kd)
                     @test observed isa KeyedArray
                     @test isapprox(observed, expected)
@@ -56,9 +57,9 @@ using Test
 
                 @testset "multi-sample method" begin
                     expected = [
-                        1.0686337176543628 0.6359475064225186;
-                        -0.44724174718706566 0.6246866736932383;
-                        0.914066493850531 0.9897659744431875
+                        0.8744990592397803 0.6468838205306433;
+                        0.5919869675852324 0.04861847876961256;
+                        0.24068367188141987 0.3277215089605162
                     ]
                     observed = rand(rng, kd, 2)
                     @test observed isa KeyedArray
