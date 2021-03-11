@@ -113,8 +113,10 @@ Distributions.sampler(d::KeyedDistribution) = sampler(distribution(d))
 
 Base.eltype(d::KeyedDistribution) = eltype(distribution(d))
 
-Distributions._logpdf(d::KeyedDistribution, x::AbstractArray) =
-    Distributions._logpdf(distribution(d), x)
+function Distributions._logpdf(d::KeyedDistribution, x::AbstractArray)
+    # TODO issue for inner KeyedArray parameter
+    return Distributions._logpdf(distribution(d), x)
+end
 
 # Also need to overload `rand` methods to return KeyedArrays
 
@@ -142,8 +144,10 @@ Distributions.mean(d::KeyedDistribution) = KeyedArray(mean(distribution(d)), axi
 
 Distributions.var(d::KeyedDistribution) = KeyedArray(var(distribution(d)), axiskeys(d))
 
-Distributions.cov(d::KeyedDistribution) =
-    KeyedArray(cov(distribution(d)), (first(axiskeys(d)), first(axiskeys(d))))
+function Distributions.cov(d::KeyedDistribution)
+    keys = vcat(axiskeys(d)...)
+    return KeyedArray(cov(distribution(d)), (keys, keys))
+end
 
 Distributions.entropy(d::KeyedDistribution) = entropy(distribution(d))
 Distributions.entropy(d::KeyedDistribution, b::Real) = entropy(distribution(d), b)
