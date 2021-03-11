@@ -72,7 +72,6 @@ is the keys it was constructed with.
 For any other `Sampleable` this is equal to `1:length(s)`.
 """
 AxisKeys.axiskeys(d::KeyedDistOrSampleable) = tuple(d.keys)
-AxisKeys.axiskeys(d::Sampleable) = tuple(Base.OneTo(length(d)))
 
 # Standard functions to overload for new Distribution and/or Sampleable
 # https://juliastats.org/Distributions.jl/latest/extends/#Create-New-Samplers-and-Distributions

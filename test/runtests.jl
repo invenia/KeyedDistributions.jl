@@ -70,12 +70,6 @@ using Test
         end
     end
 
-    @testset "Non-Distribution Sampleable only" begin
-        sampler = Distributions.MultinomialSampler(3, [0.1, 0.2, 0.3])
-
-        @test axiskeys(sampler) == (Base.OneTo(3), )
-    end
-
     @testset "KeyedDistribution only" begin
         @testset "Inner keys constructor" begin
             kd2 = KeyedDistribution(MvNormal(KeyedArray(m, keys), s))
