@@ -57,8 +57,11 @@ Constructs a [`KeyedDistribution`](@ref) using the keys of the first field store
 """
 function KeyedDistribution(d::Distribution)
     first_field = getfield(d, 1)
-    return KeyedDistribution(d, axiskeys(first_field))
+    return KeyedDistribution(d, _keys(first_field))
 end
+
+_keys(x::KeyedArray) = axiskeys(x)
+_keys(x) = map(Base.OneTo, size(x))
 
 const KeyedDistOrSampleable = Union{KeyedDistribution, KeyedSampleable}
 

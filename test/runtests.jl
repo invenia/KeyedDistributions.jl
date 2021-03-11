@@ -100,13 +100,20 @@ using Test
         keys = ([:a, :b, :c], )
         kd = KeyedDistribution(d, keys)
 
-        @testset "Inner keys constructor" begin
-            kd2 = KeyedDistribution(MvNormal(KeyedArray(m, keys), s))
+        @testset "no-keys constructor" begin
+            @testset "inner keys" begin
+                kd2 = KeyedDistribution(MvNormal(KeyedArray(m, keys), s))
 
-            @test kd2 isa Distribution
-            @test distribution(kd2) == d
-            @test axiskeys(kd2) == keys
-            @test mean(kd2) == m
+                @test kd2 isa Distribution
+                @test distribution(kd2) == d
+                @test axiskeys(kd2) == keys
+                @test mean(kd2) == m
+            end
+
+            @testset "default keys" begin
+                kd2 = KeyedDistribution(MvNormal(m, s))
+                @test axiskeys(kd2) == (Base.OneTo(3), )
+            end
         end
 
         @testset "base functions" begin
