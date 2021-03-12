@@ -102,8 +102,8 @@ AxisKeys.axiskeys(d::KeyedDistOrSampleable) = d.keys
 function Distributions._rand!(
     rng::AbstractRNG,
     d::KeyedDistOrSampleable,
-    x::AbstractVector{T}
-) where T<:Real
+    x::AbstractVector{<:Real}
+)
     sample = Distributions._rand!(rng, distribution(d), x)
     return KeyedArray(sample, axiskeys(d))
 end
