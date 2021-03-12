@@ -126,12 +126,7 @@ using Test
                 @test entropy(kd) == entropy(d)
                 @test entropy(kd, 2) == entropy(d, 2)
 
-                if case == :no_keys
-                    # https://github.com/mcabbott/AxisKeys.jl/issues/54
-                    @test_broken Distributions._logpdf(kd, m) == Distributions._logpdf(d, m)
-                else
-                    @test Distributions._logpdf(kd, m) == Distributions._logpdf(d, m)
-                end
+                @test Distributions._logpdf(kd, m) == Distributions._logpdf(d, m)
 
                 # statistical functions commute with accessor methods
                 for f in (mean, var, cov)

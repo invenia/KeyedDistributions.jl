@@ -3,6 +3,7 @@ module KeyedDistributions
 using AutoHashEquals
 using AxisKeys
 using Distributions
+using IterTools
 using Random: AbstractRNG
 
 export KeyedDistribution, KeyedSampleable
@@ -119,10 +120,18 @@ Distributions.sampler(d::KeyedDistribution) = sampler(distribution(d))
 Base.eltype(d::KeyedDistribution) = eltype(distribution(d))
 
 function Distributions._logpdf(d::KeyedDistribution, x::AbstractArray)
-    # Does not support KeyedArray as parameter of Distribution
+    # Workaround when KeyedArray is parameter of Distribution
     # https://github.com/mcabbott/AxisKeys.jl/issues/54
-    return Distributions._logpdf(distribution(d), x)
+    dist = distribution(d)
+    T = typeof(dist)
+    args = map(_maybe_parent, fieldvalues(dist))
+    unkeyed_dist = T.name.wrapper(args...)
+
+    return Distributions._logpdf(unkeyed_dist, x)
 end
+
+_maybe_parent(x) = x
+_maybe_parent(x::AbstractArray) = parent(x)
 
 # Also need to overload `rand` methods to return KeyedArrays:
 
