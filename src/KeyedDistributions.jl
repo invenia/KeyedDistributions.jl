@@ -38,8 +38,8 @@ for T in (:Distribution, :Sampleable)
                     "number of keys ($(prod(length, keys))) must match " *
                     "number of variates ($(length(d)))"))
 
-                if F == Matrixvariate
-                    lengths = map(v -> length(v), keys)
+                if F == Matrixvariate  # TODO consider dispatch for this
+                    lengths = map(length, keys)
                     lengths == size(d) || throw(ArgumentError(
                         "lengths of key vectors $(lengths) must match " *
                         "size of distribution $(size(d))"))
@@ -88,12 +88,9 @@ distribution(d::KeyedDistOrSampleable) = d.d
 # AxisKeys functionality
 
 """
-    axiskeys(s::Sampleable)
+    axiskeys(d::Union{KeyedDistribution, KeyedSampleable})
 
-Return the keys for the variates of the `Sampleable`.
-For a [`KeyedDistribution`](@ref) or [`KeyedSampleable`](@ref)
-this is the keys it was constructed with.
-For any other `Sampleable` this is equal to `1:length(s)`.
+Return the keys for the variates of the `KeyedDistribution` or `KeyedSampleable`.
 """
 AxisKeys.axiskeys(d::KeyedDistOrSampleable) = d.keys
 
@@ -111,9 +108,7 @@ end
 
 Base.length(d::KeyedDistOrSampleable) = length(distribution(d))
 
-function Distributions.size(d::KeyedDistribution{F}) where F<:Matrixvariate
-    return size(distribution(d))
-end
+Distributions.size(d::KeyedDistribution{<:Matrixvariate}) = size(distribution(d))
 
 Distributions.sampler(d::KeyedDistribution) = sampler(distribution(d))
 
@@ -147,7 +142,7 @@ function Base.rand(rng::AbstractRNG, d::KeyedDistOrSampleable, n::Int)
     return KeyedArray(samples, (first(axiskeys(d)), Base.OneTo(n)))
 end
 
-function Base.rand(rng::AbstractRNG, d::KeyedDistribution{F}, n::Int) where F<:Matrixvariate
+function Base.rand(rng::AbstractRNG, d::KeyedDistribution{<:Matrixvariate}, n::Int)
     # Distributions.rand returns a vector of matrices
     samples = [KeyedArray(x, axiskeys(d)) for x in rand(rng, distribution(d), n)]
     return KeyedArray(samples, Base.OneTo(n))
