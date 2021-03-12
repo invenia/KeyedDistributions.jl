@@ -52,7 +52,7 @@ using Test
             end
 
             @testset "sampling" begin
-                # Samples from the distribution both wrapped and unwrapped should be the same.
+                # Samples from the distribution both wrapped and unwrapped are the same
                 @test rand(StableRNG(1), d) == rand(StableRNG(1), kd)
                 @test rand(StableRNG(1), d, 3) == rand(StableRNG(1), kd, 3)
 
@@ -68,7 +68,7 @@ using Test
                 end
 
                 @testset "one-sample method" begin
-                    expected = [0.3308452209411066, -0.10785874526873923, 0.3177486760818843]
+                    expected = [0.3308452209411066, -0.1078587452687392, 0.3177486760818843]
                     observed = rand(rng, kd)
                     @test observed isa KeyedArray
                     @test isapprox(observed, expected)
@@ -98,9 +98,9 @@ using Test
         s = cov(X; dims=1)
         d = MvNormal(m, s)
         keys = ([:a, :b, :c], )
-        keys_kd = KeyedDistribution(d, keys)
-        no_keys_kd = KeyedDistribution(MvNormal(KeyedArray(m, keys), s))
-        kds = (keys=keys_kd, no_keys=no_keys_kd)
+        kd_keys = KeyedDistribution(d, keys)
+        kd_no_keys = KeyedDistribution(MvNormal(KeyedArray(m, keys), s))
+        kds = (keys=kd_keys, no_keys=kd_no_keys)
 
         @testset "$case" for case in (:keys, :no_keys)
             kd = kds[case]
@@ -144,13 +144,6 @@ using Test
             kd = KeyedDistribution(MvNormal(m, s))
             @test axiskeys(kd) == (Base.OneTo(3), )
         end
-    end
-
-    @testset "Invalid keys $T" for T in (KeyedDistribution, KeyedSampleable)
-        # Wrong number of keys
-        @test_throws DimensionMismatch T(MvNormal(ones(3)), ["foo"])
-        # AxisKeys requires key vectors to be AbstractVector
-        @test_throws MethodError T(MvNormal(ones(3)), (:a, :b, :c))
     end
 
     @testset "Distributions types" begin
@@ -224,5 +217,14 @@ using Test
             @test rand(rng, ksamp) == [3, 2]
             @test rand(rng, ksamp, 2) == [1 1; 4 4]
         end
+    end
+
+    @testset "Invalid keys $T" for T in (KeyedDistribution, KeyedSampleable)
+        # Wrong number of keys
+        @test_throws ArgumentError T(MvNormal(ones(3)), ["foo"])
+        # Wrong key lengths
+        @test_throws ArgumentError T(Wishart(7.0, Matrix(1.0I, 2, 2)), (["foo"], ["bar"]))
+        # AxisKeys requires key vectors to be AbstractVector
+        @test_throws MethodError T(MvNormal(ones(3)), (:a, :b, :c))
     end
 end

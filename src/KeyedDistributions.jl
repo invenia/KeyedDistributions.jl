@@ -9,34 +9,39 @@ export KeyedDistribution, KeyedSampleable
 export axiskeys, distribution
 
 
+# Constructors
+
 for T in (:Distribution, :Sampleable)
     KeyedT = Symbol(:Keyed, T)
     @eval begin
         """
             $($KeyedT)(d<:$($T), keys::Tuple{Vararg{AbstractVector}})
 
-        Stores `keys` for each variate alongside the `$($T)` `d`.
-
-        The length of the `keys` tuple must be the number of dimensions, which is 1 for
-        univariate and multivariate distributions, and 2 for matrix-variate distributions.
-
-        The length of each vector in `keys` must match the length along each dimension.
+        Stores `keys` for each variate alongside the [`$($T)`](@ref) `d`,
+        supporting all of the common functions of a [`$($T)`](@ref).
+        Common functions that return an [`AbstractArray`](@ref), such as [`rand`](@ref),
+        will return a [`KeyedArray`](@ref) with keys derived from the `$($T)`.
 
         The type of `keys` is restricted to be consistent with
-        AxisKeys.jl (https://github.com/mcabbott/AxisKeys.jl)
+        [AxisKeys.jl](https://github.com/mcabbott/AxisKeys.jl).
+        The length of the `keys` tuple must be the number of dimensions, which is 1 for
+        univariate and multivariate distributions, and 2 for matrix-variate distributions.
+        The length of each key vector in must match the length along each dimension.
         """
         @auto_hash_equals struct $KeyedT{F<:VariateForm, S<:ValueSupport, D<:$T{F, S}} <: $T{F, S}
             d::D
             keys::Tuple{Vararg{AbstractVector}}
 
             function $KeyedT(d::$T{F, S}, keys::Tuple{Vararg{AbstractVector}}) where {F, S}
-                length(d) == prod(length, keys) || throw(DimensionMismatch(
+                length(d) == prod(length, keys) || throw(ArgumentError(
                     "number of keys ($(prod(length, keys))) must match " *
                     "number of variates ($(length(d)))"))
 
                 if F == Matrixvariate
-                    map(v -> length(v), keys) == size(d) || throw(ArgumentError(
-                        "lengths of key vectors must match size of distribution"))
+                    lengths = map(v -> length(v), keys)
+                    lengths == size(d) || throw(ArgumentError(
+                        "lengths of key vectors $(lengths) must match " *
+                        "size of distribution $(size(d))"))
                 end
 
                 return new{F, S, typeof(d)}(d, keys)
@@ -84,9 +89,9 @@ distribution(d::KeyedDistOrSampleable) = d.d
 """
     axiskeys(s::Sampleable)
 
-Return the keys for the variates of the Sampleable.
-For an [`KeyedDistribution`](@ref) or [`KeyedSampleable`](@ref) this
-is the keys it was constructed with.
+Return the keys for the variates of the `Sampleable`.
+For a [`KeyedDistribution`](@ref) or [`KeyedSampleable`](@ref)
+this is the keys it was constructed with.
 For any other `Sampleable` this is equal to `1:length(s)`.
 """
 AxisKeys.axiskeys(d::KeyedDistOrSampleable) = d.keys
@@ -119,11 +124,11 @@ function Distributions._logpdf(d::KeyedDistribution, x::AbstractArray)
     return Distributions._logpdf(distribution(d), x)
 end
 
-# Also need to overload `rand` methods to return KeyedArrays
+# Also need to overload `rand` methods to return KeyedArrays:
 
 function Base.rand(rng::AbstractRNG, d::KeyedDistOrSampleable)
     sample = rand(rng, distribution(d))
-    ndims(sample) == 0 && return sample  # univariate
+    ndims(sample) == 0 && return sample  # univariate returns a Number
     return KeyedArray(sample, axiskeys(d))
 end
 
