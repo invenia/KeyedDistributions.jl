@@ -17,10 +17,10 @@ for T in (:Distribution, :Sampleable)
         """
             $($KeyedT)(d<:$($T), keys::Tuple{Vararg{AbstractVector}})
 
-        Stores `keys` for each variate alongside the [`$($T)`](@ref) `d`,
-        supporting all of the common functions of a [`$($T)`](@ref).
-        Common functions that return an [`AbstractArray`](@ref), such as [`rand`](@ref),
-        will return a [`KeyedArray`](@ref) with keys derived from the `$($T)`.
+        Stores `keys` for each variate alongside the `$($T)` `d`,
+        supporting all of the common functions of a `$($T)`.
+        Common functions that return an `AbstractArray`, such as `rand`,
+        will return a `KeyedArray` with keys derived from the `$($T)`.
 
         The type of `keys` is restricted to be consistent with
         [AxisKeys.jl](https://github.com/mcabbott/AxisKeys.jl).
