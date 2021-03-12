@@ -161,7 +161,7 @@ using Test
 
             @test kd isa UnivariateDistribution
             @test axiskeys(kd) == (["variate"], )
-            @test length(kd) == 1
+            @test length(kd) == length(d) == 1
 
             @test isapprox(rand(rng, kd), 0.39349598502717537)
             @test isapprox(rand(rng, kd, 2), [0.519693102856957, 0.6505773044249047])
@@ -173,10 +173,11 @@ using Test
             rng = StableRNG(1)
 
             @test md isa MatrixDistribution
-            @test size(md) == (2, 2)
+            @test length(md) == length(d) == 4
+            @test size(md) == size(d) == (2, 2)
             @test axiskeys(md) == (["x1", "x2"], ["y1", "y2"])
 
-            @testset "one-sample method" begin
+            @testset "sample" begin
                 expected = [
                     4.297085163636559 -1.7486034270372186;
                     -1.7486034270372186 8.375810638889545
@@ -188,7 +189,7 @@ using Test
                 @test axiskeys(observed) == axiskeys(md)
             end
 
-            @testset "multi-sample method" begin
+            @testset "multi-sample" begin
                 expected = [
                     [
                         16.39083916144797 4.884197412188479;
@@ -218,7 +219,7 @@ using Test
             @test ksamp isa Sampleable
             @test !(ksamp isa Distribution)
             @test axiskeys(ksamp) == (["number1", "number2"], )
-            @test length(ksamp) == 2
+            @test length(ksamp) == length(samp) == 2
 
             @test rand(rng, ksamp) == [3, 2]
             @test rand(rng, ksamp, 2) == [1 1; 4 4]
