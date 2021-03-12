@@ -98,49 +98,51 @@ using Test
         s = cov(X; dims=1)
         d = MvNormal(m, s)
         keys = ([:a, :b, :c], )
-        kd = KeyedDistribution(d, keys)
+        keys_kd = KeyedDistribution(d, keys)
+        no_keys_kd = KeyedDistribution(MvNormal(KeyedArray(m, keys), s))
+        kds = (keys=keys_kd, no_keys=no_keys_kd)
 
-        @testset "no-keys constructor" begin
-            @testset "inner keys" begin
-                kd2 = KeyedDistribution(MvNormal(KeyedArray(m, keys), s))
+        @testset "$case" for case in (:keys, :no_keys)
+            kd = kds[case]
 
-                @test kd2 isa Distribution
-                @test distribution(kd2) == d
-                @test axiskeys(kd2) == keys
-                @test mean(kd2) == m
+            @testset "base functions" begin
+                @test kd isa Distribution
+                @test distribution(kd) == d
+                @test axiskeys(kd) == keys
+                @test sampler(kd) == sampler(d)
+                @test eltype(kd) == eltype(d) == Float64
             end
 
-            @testset "default keys" begin
-                kd2 = KeyedDistribution(MvNormal(m, s))
-                @test axiskeys(kd2) == (Base.OneTo(3), )
+            @testset "statistical functions" begin
+                @test mean(kd) isa KeyedArray{Float64, 1}
+                @test parent(mean(kd)) == mean(d) == m
+
+                @test var(kd) isa KeyedArray{Float64, 1}
+                @test parent(var(kd)) == var(d) == diag(s)
+
+                @test cov(kd) isa KeyedArray{Float64, 2}
+                @test parent(cov(kd)) == cov(d) == s
+
+                @test entropy(kd) == entropy(d)
+                @test entropy(kd, 2) == entropy(d, 2)
+
+                if case == :no_keys
+                    # https://github.com/mcabbott/AxisKeys.jl/issues/54
+                    @test_broken Distributions._logpdf(kd, m) == Distributions._logpdf(d, m)
+                else
+                    @test Distributions._logpdf(kd, m) == Distributions._logpdf(d, m)
+                end
+
+                # statistical functions commute with accessor methods
+                for f in (mean, var, cov)
+                    @test f(distribution(kd)) == parent(f(kd))
+                end
             end
         end
 
-        @testset "base functions" begin
-            @test kd isa Distribution
-            @test sampler(kd) == sampler(d)
-            @test eltype(kd) == eltype(d) == Float64
-        end
-
-        @testset "statistical functions" begin
-            @test mean(kd) isa KeyedArray{Float64, 1}
-            @test parent(mean(kd)) == mean(d) == m
-
-            @test var(kd) isa KeyedArray{Float64, 1}
-            @test parent(var(kd)) == var(d) == diag(s)
-
-            @test cov(kd) isa KeyedArray{Float64, 2}
-            @test parent(cov(kd)) == cov(d) == s
-
-            @test entropy(kd) == entropy(d)
-            @test entropy(kd, 2) == entropy(d, 2)
-
-            @test Distributions._logpdf(kd, m) == Distributions._logpdf(d, m)
-
-            # statistical functions commute with accessor methods
-            for f in (mean, var, cov)
-                @test f(distribution(kd)) == parent(f(kd))
-            end
+        @testset "default keys" begin
+            kd = KeyedDistribution(MvNormal(m, s))
+            @test axiskeys(kd) == (Base.OneTo(3), )
         end
     end
 

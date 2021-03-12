@@ -114,7 +114,8 @@ Distributions.sampler(d::KeyedDistribution) = sampler(distribution(d))
 Base.eltype(d::KeyedDistribution) = eltype(distribution(d))
 
 function Distributions._logpdf(d::KeyedDistribution, x::AbstractArray)
-    # TODO issue for inner KeyedArray parameter
+    # TODO support KeyedArray as parameter of `Distribution`
+    # https://github.com/mcabbott/AxisKeys.jl/issues/54
     return Distributions._logpdf(distribution(d), x)
 end
 
