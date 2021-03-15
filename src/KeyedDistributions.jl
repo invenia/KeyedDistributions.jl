@@ -34,16 +34,10 @@ for T in (:Distribution, :Sampleable)
             keys::Tuple{Vararg{AbstractVector}}
 
             function $KeyedT(d::$T{F, S}, keys::Tuple{Vararg{AbstractVector}}) where {F, S}
-                length(d) == prod(length, keys) || throw(ArgumentError(
-                    "number of keys ($(prod(length, keys))) must match " *
-                    "number of variates ($(length(d)))"))
-
-                if F == Matrixvariate  # TODO consider dispatch for this
-                    lengths = map(length, keys)
-                    lengths == size(d) || throw(ArgumentError(
-                        "lengths of key vectors $(lengths) must match " *
-                        "size of distribution $(size(d))"))
-                end
+                key_lengths = map(length, keys)
+                key_lengths == _size(d) || throw(ArgumentError(
+                    "lengths of key vectors $key_lengths must match " *
+                    "size of distribution $(_size(d))"))
 
                 return new{F, S, typeof(d)}(d, keys)
             end
@@ -58,6 +52,9 @@ for T in (:Distribution, :Sampleable)
         $KeyedT(d::$T{F, S}, keys::AbstractVector) where {F, S} = $KeyedT(d, (keys, ))
     end
 end
+
+_size(d) = (length(d),)
+_size(d::Sampleable{<:Matrixvariate}) = size(d)
 
 """
     KeyedDistribution(d::Distribution)
