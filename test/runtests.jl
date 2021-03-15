@@ -151,6 +151,23 @@ using Test
             @test axiskeys(kd) == (["variate"], )
             @test length(kd) == length(d) == 1
 
+            @test logpdf(kd, 1) == logpdf(d, 1) ≈ -2.4345006207705726
+            @test cdf(kd, 1) == cdf(d, 1) ≈ 0.9937903346742238
+            @test quantile(kd, 0.5) == quantile(d, 0.5) == 0.5
+            @test insupport(kd, 1) == insupport(d, 1) == true
+            @test mgf(kd, 1) == mgf(d, 1) ≈ 1.6820276496988864
+            @test cf(kd, 0) == cf(d, 0) == 1.0 + 0.0im
+            @test entropy(kd) == entropy(d) ≈ -0.1904993792294276
+            @test entropy(kd, 2) == entropy(d, 2) ≈ -0.27483250970672124
+
+            @test minimum(kd) == minimum(d) == -Inf
+            @test maximum(kd) == maximum(d) == Inf
+            @test modes(kd) == modes(d) == [0.5]
+            @test mode(kd) == mode(d) == 0.5
+            @test skewness(kd) == skewness(d) == 0.0
+            @test kurtosis(kd) == kurtosis(d) == 0.0
+            @test kurtosis(kd, false) == kurtosis(d, false) == 3.0
+
             @test isapprox(rand(rng, kd), 0.39349598502717537)
             @test isapprox(rand(rng, kd, 2), [0.519693102856957, 0.6505773044249047])
         end
