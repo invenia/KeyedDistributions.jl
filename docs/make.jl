@@ -6,7 +6,7 @@ DocMeta.setdocmeta!(KeyedDistributions, :DocTestSetup, :(using KeyedDistribution
 makedocs(;
     modules=[KeyedDistributions],
     authors="Invenia Technical Computing Corporation",
-    repo="https://github.com/invenia/KeyedDistributions.jl/blob/{commit}{path}#{line}",
+    repo="https://github.com/invenia/KeyedDistributions.jl/blob/{commit}{path}#L{line}",
     sitename="KeyedDistributions.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
