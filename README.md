@@ -13,6 +13,16 @@ KeyedDistributions.jl provides thin wrappers of [`Distribution`](https://juliast
 julia> using KeyedDistributions, Distributions;
 
 julia> kd = KeyedDistribution(MvNormal(3, 1.0), [:x, :y, :z]);
+
+julia> axiskeys(kd)
+([:x, :y, :z],)
+
+julia> distribution(kd)
+ZeroMeanIsoNormal(
+dim: 3
+μ: 3-element Zeros{Float64}
+Σ: [1.0 0.0 0.0; 0.0 1.0 0.0; 0.0 0.0 1.0]
+)
 ```
 
 Methods for `Distribution` and `Sampleable` return [`KeyedArray`](https://github.com/mcabbott/AxisKeys.jl)s in place of regular `Array`s, where applicable.
