@@ -7,10 +7,7 @@ using IterTools
 using Random: AbstractRNG
 
 export KeyedDistribution, KeyedSampleable
-export axiskeys, distribution
-
-
-# Constructors
+export axiskeys, distribution, rekey
 
 for T in (:Distribution, :Sampleable)
     KeyedT = Symbol(:Keyed, T)
@@ -50,7 +47,15 @@ for T in (:Distribution, :Sampleable)
         The elements of `keys` correspond to the variates of the distribution.
         """
         $KeyedT(d::$T{F, S}, keys::AbstractVector) where {F, S} = $KeyedT(d, (keys, ))
+
+        """
+            rekey(d::$($KeyedT), keys)
+
+        Returns a new [`$($KeyedT)`](@ref) with `keys`.
+        """
+        rekey(d::$KeyedT, keys)::$KeyedT = $KeyedT(distribution(d), keys)
     end
+
 end
 
 _size(d) = (length(d),)
@@ -90,6 +95,7 @@ distribution(d::KeyedDistOrSampleable) = d.d
 Return the keys for the variates of the `KeyedDistribution` or `KeyedSampleable`.
 """
 AxisKeys.axiskeys(d::KeyedDistOrSampleable) = d.keys
+
 
 # Standard functions to overload for new Distribution and/or Sampleable
 # https://juliastats.org/Distributions.jl/latest/extends/#Create-New-Samplers-and-Distributions
