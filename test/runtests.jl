@@ -51,6 +51,15 @@ using Test
                 @test ==(kd, T(d, keys))
             end
 
+            @testset "rekey" begin
+                new_keys = [:x, :y, :z]
+                for k in (new_keys, (new_keys,))
+                    new_kd = rekey(kd, k)
+                    @test new_kd isa T
+                    @test axiskeys(new_kd) == (new_keys,)
+                end
+            end
+
             @testset "sampling" begin
                 # Samples from the distribution both wrapped and unwrapped are the same
                 @test rand(StableRNG(1), d) == rand(StableRNG(1), kd)
