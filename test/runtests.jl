@@ -1,5 +1,6 @@
 using AxisKeys
 using Distributions
+using Distributions: GenericMvTDist
 using KeyedDistributions
 using LinearAlgebra
 using StableRNGs
@@ -29,6 +30,14 @@ using Test
 
             # Input not a Distribution
             @test_throws MethodError KeyedDistribution(X, keys)
+
+            @test MvNormal <: MvNormalLike
+            @test KeyedMvNormal <: MvNormalLike
+            @test GenericMvTDist <: MvTLike
+            @test KeyedGenericMvTDist <: MvTLike
+            @test MvNormalLike <: MultivariateDistribution
+            @test MvTLike <: MultivariateDistribution
+
         end
 
         @testset "1-dimensional constructor" begin

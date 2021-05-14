@@ -3,14 +3,13 @@ module KeyedDistributions
 using AutoHashEquals
 using AxisKeys
 using Distributions
+using Distributions: GenericMvTDist
 using IterTools
 using Random: AbstractRNG
 
 export KeyedDistribution, KeyedSampleable
+export KeyedMvNormal, KeyedGenericMvTDist, MvNormalLike, MvTLike
 export axiskeys, distribution
-
-
-# Constructors
 
 for T in (:Distribution, :Sampleable)
     KeyedT = Symbol(:Keyed, T)
@@ -71,6 +70,13 @@ _keys(x::KeyedArray) = axiskeys(x)
 _keys(x) = map(Base.OneTo, size(x))
 
 const KeyedDistOrSampleable = Union{KeyedDistribution, KeyedSampleable}
+
+# MvNormal and MvT are particularly useful - these make it easier to dispatch
+const KeyedMvNormal = KeyedDistribution{Multivariate, Continuous, <:MvNormal}
+const MvNormalLike = Union{MvNormal, KeyedMvNormal}
+
+const KeyedGenericMvTDist = KeyedDistribution{Multivariate, Continuous, <:GenericMvTDist}
+const MvTLike = Union{GenericMvTDist, KeyedGenericMvTDist}
 
 # Access methods
 
