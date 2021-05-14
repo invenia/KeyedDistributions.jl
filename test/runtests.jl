@@ -35,7 +35,7 @@ using Test
             @test KeyedMvNormal <: MvNormalLike
             @test GenericMvTDist <: MvTLike
             @test KeyedGenericMvTDist <: MvTLike
-            @test MvNormal <: MultivariateDistribution
+            @test MvNormalLike <: MultivariateDistribution
             @test MvTLike <: MultivariateDistribution
 
         end
