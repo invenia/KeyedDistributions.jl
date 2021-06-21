@@ -249,4 +249,29 @@ using Test
         # AxisKeys requires key vectors to be AbstractVector
         @test_throws MethodError T(MvNormal(ones(3)), (:a, :b, :c))
     end
+
+    @testset "marginalising" begin
+
+        X = rand(StableRNG(1234), 10, 3)
+        m = vec(mean(X; dims=1))
+        s = cov(X; dims=1)
+        keys = ([:a, :b, :c], )
+
+        @testset "constructed with keys" begin
+            d = KeyedDistribution(MvNormal(m, s), keys)
+            d([:a, :b, :c]) == d
+            d([:a, :c]) == KeyedDistribution(MvNormal(m[[1, 3]], s[[1, 3], [1, 3]]), [:a, :c])
+            d([:a]) == KeyedDistribution(MvNormal(m[[1]], s[[1], [1]]), [:a])
+            d(:a) == KeyedDistribution(MvNormal(m[[1]], s[[1], [1]]), [:a])
+        end
+
+        @testset "constructed without keys" begin
+            d = KeyedDistribution(MvNormal(m, s))
+            d([1, 2, 3]) == d
+            d([1, 3]) == KeyedDistribution(MvNormal(m[[1, 3]], s[[1, 3], [1, 3]]), [1, 3])
+            d([1]) == KeyedDistribution(MvNormal(m[[1]], s[[1], [1]]), [1])
+            d(1) == KeyedDistribution(MvNormal(m[[1]], s[[1], [1]]), [1])
+        end
+
+    end
 end

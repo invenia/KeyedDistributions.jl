@@ -5,6 +5,7 @@ using AxisKeys
 using Distributions
 using Distributions: GenericMvTDist
 using IterTools
+using LinearAlgebra: Symmetric
 using Random: AbstractRNG
 
 export KeyedDistribution, KeyedSampleable
@@ -27,6 +28,12 @@ for T in (:Distribution, :Sampleable)
         The length of the `keys` tuple must be the number of dimensions, which is 1 for
         univariate and multivariate distributions, and 2 for matrix-variate distributions.
         The length of each key vector in must match the length along each dimension.
+
+        !!! Note
+            Some $($KeyedT)) are callable exactly like `KeyedArray`s. This allows you to
+            marginalise out certain slices for convenience but only for the distributions
+            that support it, like `KeyedMvNormal`s. Also note that marginalising by a
+            singleton will still return a multivariate distribution`.
         """
         @auto_hash_equals struct $KeyedT{F<:VariateForm, S<:ValueSupport, D<:$T{F, S}} <: $T{F, S}
             d::D
@@ -36,7 +43,8 @@ for T in (:Distribution, :Sampleable)
                 key_lengths = map(length, keys)
                 key_lengths == _size(d) || throw(ArgumentError(
                     "lengths of key vectors $key_lengths must match " *
-                    "size of distribution $(_size(d))"))
+                    "size of distribution $(_size(d))"
+                ))
 
                 return new{F, S, typeof(d)}(d, keys)
             end
@@ -77,6 +85,16 @@ const MvNormalLike = Union{MvNormal, KeyedMvNormal}
 
 const KeyedGenericMvTDist = KeyedDistribution{Multivariate, Continuous, <:GenericMvTDist}
 const MvTLike = Union{GenericMvTDist, KeyedGenericMvTDist}
+
+
+function (d::KeyedMvNormal)(keys...)::KeyedMvNormal
+    return KeyedDistribution(
+        # vcat and hcat ensure singleton keys return vector/matrix respectively.
+        MvNormal(vcat(mean(d)(keys...)), Symmetric(hcat(cov(d)(keys..., keys...)))),
+        vcat(keys...)
+    )
+end
+
 
 # Access methods
 
