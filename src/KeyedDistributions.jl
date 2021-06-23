@@ -66,13 +66,10 @@ _size(d::Sampleable{<:Matrixvariate}) = size(d)
 """
     KeyedDistribution(d::Distribution)
 
-Constructs a [`KeyedDistribution`](@ref) using the keys of the first field stored in `d`,
-or if there are no keys, `1:n` for the length `n` of each dimension.
+Constructs a [`KeyedDistribution`](@ref) using the keys of the mean component.
+If there are no keys, uses `1:n` for the length `n` of each dimension.
 """
-function KeyedDistribution(d::Distribution)
-    first_field = getfield(d, 1)
-    return KeyedDistribution(d, _keys(first_field))
-end
+KeyedDistribution(d::Distribution) = KeyedDistribution(d, _keys(mean(d)))
 
 _keys(x::KeyedArray) = axiskeys(x)
 _keys(x) = map(Base.OneTo, size(x))
@@ -94,7 +91,6 @@ function (d::KeyedMvNormal)(keys...)::KeyedMvNormal
         vcat(keys...)
     )
 end
-
 
 # Access methods
 
