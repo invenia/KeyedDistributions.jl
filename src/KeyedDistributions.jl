@@ -92,6 +92,15 @@ function (d::KeyedMvNormal)(keys...)::KeyedMvNormal
     )
 end
 
+function (d::KeyedGenericMvTDist)(keys...)::KeyedGenericMvTDist
+    inds = map(x -> AxisKeys.findindex(x, axiskeys(d)[1]), vcat(keys[1]))
+    return KeyedDistribution(
+        # vcat and hcat ensure singleton keys return vector/matrix respectively.
+        MvTDist(d.d.df, vcat(d.d.μ[inds]), hcat(d.d.Σ[inds, inds])),
+        vcat(keys...),
+    )
+end
+
 # Access methods
 
 """
