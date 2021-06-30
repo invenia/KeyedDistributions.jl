@@ -57,6 +57,7 @@ using Test
                 @test axiskeys(kd) == keys
                 @test length(kd) == length(d) == 3
                 @test isequal(kd, T(d, [:a, :b, :c]))
+                @test params(kd) == params(d) == (m, s)
                 @test ==(kd, T(d, keys))
             end
 

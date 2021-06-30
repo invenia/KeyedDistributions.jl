@@ -66,11 +66,12 @@ _size(d::Sampleable{<:Matrixvariate}) = size(d)
 """
     KeyedDistribution(d::Distribution)
 
-Constructs a [`KeyedDistribution`](@ref) using the keys of the mean component.
-If there are no keys, uses `1:n` for the length `n` of each dimension.
+Constructs a [`KeyedDistribution`](@ref) using the keys of the parameter that matches `size(d)`.
+If the parameter has no keys, uses `1:n` for the length `n` of each dimension.
 """
-KeyedDistribution(d::Distribution) = KeyedDistribution(d, _keys(mean(d)))
+KeyedDistribution(d::Distribution) = KeyedDistribution(d, _keys(d))
 
+_keys(d::Distribution) = _keys(first(filter(x -> size(x) == size(d), params(d))))
 _keys(x::KeyedArray) = axiskeys(x)
 _keys(x) = map(Base.OneTo, size(x))
 
@@ -137,6 +138,8 @@ Base.length(d::KeyedDistOrSampleable) = length(distribution(d))
 Distributions.size(d::KeyedDistribution{<:Matrixvariate}) = size(distribution(d))
 
 Distributions.sampler(d::KeyedDistribution) = sampler(distribution(d))
+
+Distributions.params(d::KeyedDistOrSampleable) = params(distribution(d))
 
 Base.eltype(d::KeyedDistribution) = eltype(distribution(d))
 
