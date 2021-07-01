@@ -6,6 +6,7 @@ using Distributions
 using Distributions: GenericMvTDist
 using IterTools
 using LinearAlgebra: Symmetric
+using PDMatsExtras: submat
 using Random: AbstractRNG
 
 export KeyedDistribution, KeyedSampleable
@@ -84,22 +85,15 @@ const MvNormalLike = Union{MvNormal, KeyedMvNormal}
 const KeyedGenericMvTDist = KeyedDistribution{Multivariate, Continuous, <:GenericMvTDist}
 const MvTLike = Union{GenericMvTDist, KeyedGenericMvTDist}
 
-
+# Use submat to preserve the covariance matrix PDMat type
 function (d::KeyedMvNormal)(keys...)::KeyedMvNormal
-    return KeyedDistribution(
-        # vcat and hcat ensure singleton keys return vector/matrix respectively.
-        MvNormal(vcat(mean(d)(keys...)), Symmetric(hcat(cov(d)(keys..., keys...)))),
-        vcat(keys...)
-    )
+    inds = map(x -> AxisKeys.findindex(x, axiskeys(d)[1]), vcat(keys[1]))
+    return KeyedDistribution(MvNormal(d.d.μ[inds], submat(d.d.Σ, inds)), vcat(keys...))
 end
 
 function (d::KeyedGenericMvTDist)(keys...)::KeyedGenericMvTDist
     inds = map(x -> AxisKeys.findindex(x, axiskeys(d)[1]), vcat(keys[1]))
-    return KeyedDistribution(
-        # vcat and hcat ensure singleton keys return vector/matrix respectively.
-        MvTDist(d.d.df, vcat(d.d.μ[inds]), hcat(d.d.Σ[inds, inds])),
-        vcat(keys...),
-    )
+    return KeyedDistribution(MvTDist(d.d.df, d.d.μ[inds], submat(d.d.Σ, inds)), vcat(keys...))
 end
 
 # Access methods
