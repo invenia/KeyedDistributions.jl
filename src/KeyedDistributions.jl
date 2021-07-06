@@ -30,11 +30,12 @@ for T in (:Distribution, :Sampleable)
         univariate and multivariate distributions, and 2 for matrix-variate distributions.
         The length of each key vector in must match the length along each dimension.
 
-        !!! Note
-            Some $($KeyedT)) are callable exactly like `KeyedArray`s. This allows you to
-            marginalise out certain slices for convenience but only for the distributions
-            that support it, like `KeyedMvNormal`s. Also note that marginalising by a
-            singleton will still return a multivariate distribution`.
+        !!! Note round-bracket indexing for marginalizing.
+            For distributions that can be marginalized exactly, $($KeyedT)) are "callable"
+            exactly like `KeyedArray`s, i.e. round-brackets are used to retain certain slices
+            and marginalise out others. For example for `D::KeyedMvNormal` over `:a, :b, :c`:
+             - `D(:a)` will marginalise out `:b, :c` and return a `KeyedMvNormal` over `:a`.
+             - `D([:a, :b])` will marginalise out `:c` and return a `KeyedMvNormal` over `:a, :b`.
         """
         @auto_hash_equals struct $KeyedT{F<:VariateForm, S<:ValueSupport, D<:$T{F, S}} <: $T{F, S}
             d::D
