@@ -57,6 +57,7 @@ using Test
                 @test axiskeys(kd) == keys
                 @test length(kd) == length(d) == 3
                 @test isequal(kd, T(d, [:a, :b, :c]))
+                @test params(kd) == params(d) == (m, s)
                 @test ==(kd, T(d, keys))
             end
 
@@ -248,5 +249,56 @@ using Test
         @test_throws ArgumentError T(Wishart(7.0, Matrix(1.0I, 2, 2)), (["foo"], ["bar"]))
         # AxisKeys requires key vectors to be AbstractVector
         @test_throws MethodError T(MvNormal(ones(3)), (:a, :b, :c))
+    end
+
+    @testset "marginalising" begin
+
+        X = rand(StableRNG(1234), 10, 3)
+        m = vec(mean(X; dims=1))
+        s = cov(X; dims=1)
+        keys = ([:a, :b, :c], )
+
+        @testset "KeyedMvNormal constructed with keys" begin
+            d = KeyedDistribution(MvNormal(m, s), keys)
+            @test d([:a, :b, :c]) == d[[1, 2, 3]] == d
+
+            d13 = KeyedDistribution(MvNormal(m[[1, 3]], s[[1, 3], [1, 3]]), [:a, :c])
+            @test d([:a, :c]) == d[[1, 3]] == d13
+
+            @test d([:a]) == d[[1]] == KeyedDistribution(MvNormal(m[[1]], s[[1], [1]]), [:a])
+            @test d(:a) == d[1] == KeyedDistribution(Normal(m[1], s[1, 1]), [:a])
+        end
+
+        @testset "KeyedMvNormal constructed without keys" begin
+            d = KeyedDistribution(MvNormal(m, s))
+            @test d([1, 2, 3]) == d[[1, 2, 3]] == d
+
+            d13 = KeyedDistribution(MvNormal(m[[1, 3]], s[[1, 3], [1, 3]]), [1, 3])
+            @test d([1, 3]) == d[[1, 3]] == d13
+
+            @test d([1]) == d[[1]] == KeyedDistribution(MvNormal(m[[1]], s[[1], [1]]), [1])
+            @test d(1) == d[1] == KeyedDistribution(Normal(m[1], s[1, 1]), [1])
+        end
+
+        @testset "KeyedMvTDist constructed with keys" begin
+            d = KeyedDistribution(MvTDist(3, m, s), keys)
+            @test d([:a, :b, :c]) == d[[1, 2, 3]] == d
+
+            d13 = KeyedDistribution(MvTDist(3, m[[1, 3]], s[[1, 3], [1, 3]]), [:a, :c])
+            @test d([:a, :c]) == d[[1, 3]] == d13
+
+            @test d([:a]) == d[[1]] == KeyedDistribution(MvTDist(3, m[[1]], s[[1], [1]]), [:a])
+        end
+
+        @testset "KeyedMvTDist constructed without keys" begin
+            d = KeyedDistribution(MvTDist(3, m, s))
+            @test d([1, 2, 3]) == d[[1, 2, 3]] == d
+
+            d13 = KeyedDistribution(MvTDist(3, m[[1, 3]], s[[1, 3], [1, 3]]), [1, 3])
+            @test d([1, 3]) == d[[1, 3]] == d13
+
+            @test d([1]) == d[[1]] == KeyedDistribution(MvTDist(3, m[[1]], s[[1], [1]]), [1])
+        end
+
     end
 end

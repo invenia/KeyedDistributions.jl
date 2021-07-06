@@ -5,6 +5,8 @@ using AxisKeys
 using Distributions
 using Distributions: GenericMvTDist
 using IterTools
+using LinearAlgebra: Symmetric
+using PDMatsExtras: submat
 using Random: AbstractRNG
 
 export KeyedDistribution, KeyedSampleable
@@ -27,6 +29,16 @@ for T in (:Distribution, :Sampleable)
         The length of the `keys` tuple must be the number of dimensions, which is 1 for
         univariate and multivariate distributions, and 2 for matrix-variate distributions.
         The length of each key vector in must match the length along each dimension.
+
+        !!! Note
+            For distributions that can be marginalized exactly, the $($KeyedT)) can be
+            marginalised via the indexing or lookup syntax just like `KeyedArray`s.
+            i.e. One can use square or round brackets to retain certain indices or keys and
+            marginalise out the others. For example for `D::KeyedMvNormal` over `:a, :b, :c`:
+             - `D(:a)` or D(1) will marginalise out `:b, :c` and return a `KeyedMvNormal`
+               over `:a`.
+             - `D([:a, :b])` or `D[[1, 2]]` will marginalise out `:c` and return a
+               `KeyedMvNormal` over `:a, :b`.
         """
         @auto_hash_equals struct $KeyedT{F<:VariateForm, S<:ValueSupport, D<:$T{F, S}} <: $T{F, S}
             d::D
@@ -36,7 +48,8 @@ for T in (:Distribution, :Sampleable)
                 key_lengths = map(length, keys)
                 key_lengths == _size(d) || throw(ArgumentError(
                     "lengths of key vectors $key_lengths must match " *
-                    "size of distribution $(_size(d))"))
+                    "size of distribution $(_size(d))"
+                ))
 
                 return new{F, S, typeof(d)}(d, keys)
             end
@@ -49,6 +62,9 @@ for T in (:Distribution, :Sampleable)
         The elements of `keys` correspond to the variates of the distribution.
         """
         $KeyedT(d::$T{F, S}, keys::AbstractVector) where {F, S} = $KeyedT(d, (keys, ))
+
+        # Allows marginalisation via lookup syntax, using getindex.
+        (d::$KeyedT)(keys...) = d[first(map(AxisKeys.findindex, keys, axiskeys(d)))]
     end
 end
 
@@ -58,14 +74,12 @@ _size(d::Sampleable{<:Matrixvariate}) = size(d)
 """
     KeyedDistribution(d::Distribution)
 
-Constructs a [`KeyedDistribution`](@ref) using the keys of the first field stored in `d`,
-or if there are no keys, `1:n` for the length `n` of each dimension.
+Constructs a [`KeyedDistribution`](@ref) using the keys of the parameter that matches `size(d)`.
+If the parameter has no keys, uses `1:n` for the length `n` of each dimension.
 """
-function KeyedDistribution(d::Distribution)
-    first_field = getfield(d, 1)
-    return KeyedDistribution(d, _keys(first_field))
-end
+KeyedDistribution(d::Distribution) = KeyedDistribution(d, _keys(d))
 
+_keys(d::Distribution) = _keys(first(filter(x -> size(x) == size(d), params(d))))
 _keys(x::KeyedArray) = axiskeys(x)
 _keys(x) = map(Base.OneTo, size(x))
 
@@ -77,6 +91,19 @@ const MvNormalLike = Union{MvNormal, KeyedMvNormal}
 
 const KeyedGenericMvTDist = KeyedDistribution{Multivariate, Continuous, <:GenericMvTDist}
 const MvTLike = Union{GenericMvTDist, KeyedGenericMvTDist}
+
+# Use submat to preserve the covariance matrix PDMat type
+function Base.getindex(d::KeyedMvNormal, i::Vector)::KeyedMvNormal
+    return KeyedDistribution(MvNormal(d.d.μ[i], submat(d.d.Σ, i)), axiskeys(d)[1][i])
+end
+
+function Base.getindex(d::KeyedMvNormal, i::Integer)::KeyedDistribution
+    return KeyedDistribution(Normal(d.d.μ[i], d.d.Σ[i, i]), [axiskeys(d)[1][i]])
+end
+
+function Base.getindex(d::KeyedGenericMvTDist, i::Vector)::KeyedGenericMvTDist
+    return KeyedDistribution(MvTDist(d.d.df, d.d.μ[i], submat(d.d.Σ, i)), axiskeys(d)[1][i])
+end
 
 # Access methods
 
@@ -114,6 +141,8 @@ Base.length(d::KeyedDistOrSampleable) = length(distribution(d))
 Distributions.size(d::KeyedDistribution{<:Matrixvariate}) = size(distribution(d))
 
 Distributions.sampler(d::KeyedDistribution) = sampler(distribution(d))
+
+Distributions.params(d::KeyedDistOrSampleable) = params(distribution(d))
 
 Base.eltype(d::KeyedDistribution) = eltype(distribution(d))
 
