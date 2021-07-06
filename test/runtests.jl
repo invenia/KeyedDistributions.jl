@@ -260,46 +260,46 @@ using Test
 
         @testset "KeyedMvNormal constructed with keys" begin
             d = KeyedDistribution(MvNormal(m, s), keys)
-            d([:a, :b, :c]) == d[[1, 2, 3]] == d
+            @test d([:a, :b, :c]) == d[[1, 2, 3]] == d
 
             d13 = KeyedDistribution(MvNormal(m[[1, 3]], s[[1, 3], [1, 3]]), [:a, :c])
-            d([:a, :c]) == d[[1, 3]] == d13
+            @test d([:a, :c]) == d[[1, 3]] == d13
 
             d1 = KeyedDistribution(MvNormal(m[[1]], s[[1], [1]]), [:a])
-            d([:a]) == d[[1]] == d(:a) == d[1] == d1
+            @test d([:a]) == d[[1]] == d(:a) == d[1] == d1
         end
 
         @testset "KeyedMvNormal constructed without keys" begin
             d = KeyedDistribution(MvNormal(m, s))
-            d([1, 2, 3]) == d[[1, 2, 3]] == d
+            @test d([1, 2, 3]) == d[[1, 2, 3]] == d
 
             d13 = KeyedDistribution(MvNormal(m[[1, 3]], s[[1, 3], [1, 3]]), [1, 3])
-            d([1, 3]) == d[[1, 3]] == d13
+            @test d([1, 3]) == d[[1, 3]] == d13
 
             d1 = KeyedDistribution(MvNormal(m[[1]], s[[1], [1]]), [1])
-            d([1]) == d[[1]] == d(1) == d[1] == d1
+            @test d([1]) == d[[1]] == d(1) == d[1] == d1
         end
 
         @testset "KeyedMvTDist constructed with keys" begin
             d = KeyedDistribution(MvTDist(3, m, s), keys)
-            d([:a, :b, :c]) == d[[1, 2, 3]] == d
+            @test d([:a, :b, :c]) == d[[1, 2, 3]] == d
 
             d13 = KeyedDistribution(MvTDist(3, m[[1, 3]], s[[1, 3], [1, 3]]), [:a, :c])
-            d([:a, :c]) == d[[1, 3]] == d13
+            @test d([:a, :c]) == d[[1, 3]] == d13
 
             d1 = KeyedDistribution(MvTDist(3, m[[1]], s[[1], [1]]), [:a])
-            d([:a]) == d[[1]] == d(:a) == d[1] == d1
+            @test d([:a]) == d[[1]] == d(:a) == d[1] == d1
         end
 
         @testset "KeyedMvTDist constructed without keys" begin
             d = KeyedDistribution(MvTDist(3, m, s))
-            d([1, 2, 3]) == d[[1, 2, 3]] == d
+            @test d([1, 2, 3]) == d[[1, 2, 3]] == d
 
             d13 = KeyedDistribution(MvTDist(3, m[[1, 3]], s[[1, 3], [1, 3]]), [1, 3])
-            d([1, 3]) == d[[1, 3]] == d13
+            @test d([1, 3]) == d[[1, 3]] == d13
 
             d1 = KeyedDistribution(MvTDist(3, m[[1]], s[[1], [1]]), [1])
-            d([1]) == d[[1]] == d(1) == d[1] == d1
+            @test d([1]) == d[[1]] == d(1) == d[1] == d1
         end
 
     end
