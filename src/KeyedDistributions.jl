@@ -90,26 +90,33 @@ const KeyedGenericMvTDist = KeyedDistribution{Multivariate, Continuous, <:Generi
 const MvTLike = Union{GenericMvTDist, KeyedGenericMvTDist}
 
 # Use submat to preserve the covariance matrix PDMat type
-function (d::KeyedMvNormal)(keys)::KeyedMvNormal
-    inds = map(x -> AxisKeys.findindex(x, axiskeys(d)[1]), vcat(keys))
-    return KeyedDistribution(MvNormal(d.d.μ[inds], submat(d.d.Σ, inds)), vcat(keys))
+function (d::KeyedMvNormal)(keys::Vector)::KeyedMvNormal
+    inds = map(x -> AxisKeys.findindex(x, axiskeys(d)[1]), keys)
+    return KeyedDistribution(MvNormal(d.d.μ[inds], submat(d.d.Σ, inds)), keys)
 end
 
-function (d::KeyedGenericMvTDist)(keys)::KeyedGenericMvTDist
-    inds = map(x -> AxisKeys.findindex(x, axiskeys(d)[1]), vcat(keys))
-    return KeyedDistribution(MvTDist(d.d.df, d.d.μ[inds], submat(d.d.Σ, inds)), vcat(keys))
+function (d::KeyedMvNormal)(key)
+    ind = AxisKeys.findindex(key, axiskeys(d)[1])
+    return KeyedDistribution(Normal(d.d.μ[ind], d.d.Σ[ind, ind]), [key])
 end
 
-function Base.getindex(d::KeyedMvNormal, inds)::KeyedMvNormal
-    i = vcat(inds)
+function (d::KeyedGenericMvTDist)(keys::Vector)::KeyedGenericMvTDist
+    inds = map(x -> AxisKeys.findindex(x, axiskeys(d)[1]), keys)
+    return KeyedDistribution(MvTDist(d.d.df, d.d.μ[inds], submat(d.d.Σ, inds)), keys)
+end
+
+function Base.getindex(d::KeyedMvNormal, inds::Vector)::KeyedMvNormal
     keys = axiskeys(d)[1]
-    return KeyedDistribution(MvNormal(d.d.μ[i], submat(d.d.Σ, i)), keys[i])
+    return KeyedDistribution(MvNormal(d.d.μ[inds], submat(d.d.Σ, inds)), keys[inds])
 end
 
-function Base.getindex(d::KeyedGenericMvTDist, inds)::KeyedGenericMvTDist
-    i = vcat(inds)
+function Base.getindex(d::KeyedMvNormal, i::Integer)
+    return KeyedDistribution(Normal(d.d.μ[i], d.d.Σ[i, i]), [axiskeys(d)[1][i]])
+end
+
+function Base.getindex(d::KeyedGenericMvTDist, inds::Vector)::KeyedGenericMvTDist
     keys = axiskeys(d)[1]
-    return KeyedDistribution(MvTDist(d.d.df, d.d.μ[i], submat(d.d.Σ, i)), keys[i])
+    return KeyedDistribution(MvTDist(d.d.df, d.d.μ[inds], submat(d.d.Σ, inds)), keys[inds])
 end
 
 # Access methods

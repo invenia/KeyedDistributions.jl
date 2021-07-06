@@ -265,8 +265,8 @@ using Test
             d13 = KeyedDistribution(MvNormal(m[[1, 3]], s[[1, 3], [1, 3]]), [:a, :c])
             @test d([:a, :c]) == d[[1, 3]] == d13
 
-            d1 = KeyedDistribution(MvNormal(m[[1]], s[[1], [1]]), [:a])
-            @test d([:a]) == d[[1]] == d(:a) == d[1] == d1
+            @test d([:a]) == d[[1]] == KeyedDistribution(MvNormal(m[[1]], s[[1], [1]]), [:a])
+            @test d(:a) == d[1] == KeyedDistribution(Normal(m[1], s[1, 1]), [:a])
         end
 
         @testset "KeyedMvNormal constructed without keys" begin
@@ -276,8 +276,8 @@ using Test
             d13 = KeyedDistribution(MvNormal(m[[1, 3]], s[[1, 3], [1, 3]]), [1, 3])
             @test d([1, 3]) == d[[1, 3]] == d13
 
-            d1 = KeyedDistribution(MvNormal(m[[1]], s[[1], [1]]), [1])
-            @test d([1]) == d[[1]] == d(1) == d[1] == d1
+            @test d([1]) == d[[1]] == KeyedDistribution(MvNormal(m[[1]], s[[1], [1]]), [1])
+            @test d(1) == d[1] == KeyedDistribution(Normal(m[1], s[1, 1]), [1])
         end
 
         @testset "KeyedMvTDist constructed with keys" begin
@@ -287,8 +287,7 @@ using Test
             d13 = KeyedDistribution(MvTDist(3, m[[1, 3]], s[[1, 3], [1, 3]]), [:a, :c])
             @test d([:a, :c]) == d[[1, 3]] == d13
 
-            d1 = KeyedDistribution(MvTDist(3, m[[1]], s[[1], [1]]), [:a])
-            @test d([:a]) == d[[1]] == d(:a) == d[1] == d1
+            @test d([:a]) == d[[1]] == KeyedDistribution(MvTDist(3, m[[1]], s[[1], [1]]), [:a])
         end
 
         @testset "KeyedMvTDist constructed without keys" begin
@@ -298,8 +297,7 @@ using Test
             d13 = KeyedDistribution(MvTDist(3, m[[1, 3]], s[[1, 3], [1, 3]]), [1, 3])
             @test d([1, 3]) == d[[1, 3]] == d13
 
-            d1 = KeyedDistribution(MvTDist(3, m[[1]], s[[1], [1]]), [1])
-            @test d([1]) == d[[1]] == d(1) == d[1] == d1
+            @test d([1]) == d[[1]] == KeyedDistribution(MvTDist(3, m[[1]], s[[1], [1]]), [1])
         end
 
     end
