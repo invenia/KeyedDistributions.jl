@@ -62,6 +62,9 @@ for T in (:Distribution, :Sampleable)
         The elements of `keys` correspond to the variates of the distribution.
         """
         $KeyedT(d::$T{F, S}, keys::AbstractVector) where {F, S} = $KeyedT(d, (keys, ))
+
+        # Allows marginalisation via lookup syntax, using getindex.
+        (d::$KeyedT)(keys...) = d[first(map(AxisKeys.findindex, keys, axiskeys(d)))]
     end
 end
 
@@ -101,11 +104,6 @@ end
 function Base.getindex(d::KeyedGenericMvTDist, i::Vector)::KeyedGenericMvTDist
     return KeyedDistribution(MvTDist(d.d.df, d.d.μ[i], submat(d.d.Σ, i)), axiskeys(d)[1][i])
 end
-
-# Use getindex functions to perform lookup
-(d::KeyedMvNormal)(keys::Vector) = d[map(x -> AxisKeys.findindex(x, axiskeys(d)[1]), keys)]
-(d::KeyedMvNormal)(key) = d[AxisKeys.findindex(key, axiskeys(d)[1])]
-(d::KeyedGenericMvTDist)(keys) = d[map(x -> AxisKeys.findindex(x, axiskeys(d)[1]), keys)]
 
 # Access methods
 
