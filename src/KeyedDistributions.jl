@@ -30,12 +30,15 @@ for T in (:Distribution, :Sampleable)
         univariate and multivariate distributions, and 2 for matrix-variate distributions.
         The length of each key vector in must match the length along each dimension.
 
-        !!! Note round-bracket indexing for marginalizing.
-            For distributions that can be marginalized exactly, $($KeyedT)) are "callable"
-            exactly like `KeyedArray`s, i.e. round-brackets are used to retain certain slices
-            and marginalise out others. For example for `D::KeyedMvNormal` over `:a, :b, :c`:
-             - `D(:a)` will marginalise out `:b, :c` and return a `KeyedMvNormal` over `:a`.
-             - `D([:a, :b])` will marginalise out `:c` and return a `KeyedMvNormal` over `:a, :b`.
+        !!! Note
+            For distributions that can be marginalized exactly, the $($KeyedT)) can be
+            marginalised via the indexing or lookup syntax just like `KeyedArray`s.
+            i.e. One can use square or round brackets to retain certain indices or keys and
+            marginalise out the others. For example for `D::KeyedMvNormal` over `:a, :b, :c`:
+             - `D(:a)` or D(1) will marginalise out `:b, :c` and return a `KeyedMvNormal`
+               over `:a`.
+             - `D([:a, :b])` or `D[[1, 2]]` will marginalise out `:c` and return a
+               `KeyedMvNormal` over `:a, :b`.
         """
         @auto_hash_equals struct $KeyedT{F<:VariateForm, S<:ValueSupport, D<:$T{F, S}} <: $T{F, S}
             d::D
@@ -95,6 +98,18 @@ end
 function (d::KeyedGenericMvTDist)(keys)::KeyedGenericMvTDist
     inds = map(x -> AxisKeys.findindex(x, axiskeys(d)[1]), vcat(keys))
     return KeyedDistribution(MvTDist(d.d.df, d.d.μ[inds], submat(d.d.Σ, inds)), vcat(keys))
+end
+
+function Base.getindex(d::KeyedMvNormal, inds)::KeyedMvNormal
+    i = vcat(inds)
+    keys = axiskeys(d)[1]
+    return KeyedDistribution(MvNormal(d.d.μ[i], submat(d.d.Σ, i)), keys[i])
+end
+
+function Base.getindex(d::KeyedGenericMvTDist, inds)::KeyedGenericMvTDist
+    i = vcat(inds)
+    keys = axiskeys(d)[1]
+    return KeyedDistribution(MvTDist(d.d.df, d.d.μ[i], submat(d.d.Σ, i)), keys[i])
 end
 
 # Access methods
