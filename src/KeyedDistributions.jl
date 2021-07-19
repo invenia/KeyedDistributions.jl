@@ -151,7 +151,7 @@ function Distributions._logpdf(d::KeyedDistribution, x::AbstractArray)
     # https://github.com/mcabbott/AxisKeys.jl/issues/54
     dist = distribution(d)
     T = typeof(dist)
-    args = map(_maybe_parent, fieldvalues(dist))
+    args = map(_maybe_parent, params(dist))
     unkeyed_dist = T.name.wrapper(args...)
 
     return Distributions._logpdf(unkeyed_dist, x)
