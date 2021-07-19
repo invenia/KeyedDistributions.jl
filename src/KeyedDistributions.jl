@@ -4,7 +4,6 @@ using AutoHashEquals
 using AxisKeys
 using Distributions
 using Distributions: GenericMvTDist
-using IterTools
 using LinearAlgebra: Symmetric
 using PDMatsExtras: submat
 using Random: AbstractRNG
