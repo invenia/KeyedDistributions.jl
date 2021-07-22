@@ -3,6 +3,7 @@ using Distributions
 using Distributions: GenericMvTDist
 using KeyedDistributions
 using LinearAlgebra
+using PDMats: PDMat
 using StableRNGs
 using Statistics
 using Test
@@ -106,41 +107,50 @@ using Test
         X = rand(StableRNG(1234), 10, 3)
         m = vec(mean(X; dims=1))
         s = cov(X; dims=1)
-        d = MvNormal(m, s)
         keys = ([:a, :b, :c], )
-        kd_keys = KeyedDistribution(d, keys)
-        kd_no_keys = KeyedDistribution(MvNormal(KeyedArray(m, keys), s))
-        kds = (keys=kd_keys, no_keys=kd_no_keys)
 
-        @testset "$case" for case in (:keys, :no_keys)
-            kd = kds[case]
+        _make_dist(::Type{MvNormal}, m, s) = MvNormal(m, s)
+        _make_dist(::Type{GenericMvTDist}, m, s) = GenericMvTDist(3, m, PDMat(s))
 
-            @testset "base functions" begin
-                @test kd isa Distribution
-                @test distribution(kd) == d
-                @test axiskeys(kd) == keys
-                @test sampler(kd) == sampler(d)
-                @test eltype(kd) == eltype(d) == Float64
-            end
+        @testset "$D" for D in (MvNormal, GenericMvTDist)
 
-            @testset "statistical functions" begin
-                @test mean(kd) isa KeyedArray{Float64, 1}
-                @test parent(mean(kd)) == mean(d) == m
+            d = _make_dist(D, m, s)
+            d_keyed = _make_dist(D, KeyedArray(m, keys), s)
 
-                @test var(kd) isa KeyedArray{Float64, 1}
-                @test parent(var(kd)) == var(d) == diag(s)
+            kd_keys = KeyedDistribution(d, keys)
+            kd_no_keys = KeyedDistribution(d_keyed)
+            kds = (keys=kd_keys, no_keys=kd_no_keys)
 
-                @test cov(kd) isa KeyedArray{Float64, 2}
-                @test parent(cov(kd)) == cov(d) == s
+            @testset "$case" for case in (:keys, :no_keys)
+                kd = kds[case]
 
-                @test entropy(kd) == entropy(d)
-                @test entropy(kd, 2) == entropy(d, 2)
+                @testset "base functions" begin
+                    @test kd isa Distribution
+                    @test distribution(kd) == d
+                    @test axiskeys(kd) == keys
+                    @test sampler(kd) == sampler(d)
+                    @test eltype(kd) == eltype(d) == Float64
+                end
 
-                @test Distributions._logpdf(kd, m) == Distributions._logpdf(d, m)
+                @testset "statistical functions" begin
+                    @test mean(kd) isa KeyedArray{Float64, 1}
+                    @test parent(mean(kd)) == mean(d) == m
 
-                # statistical functions commute with accessor methods
-                for f in (mean, var, cov)
-                    @test f(distribution(kd)) == parent(f(kd))
+                    @test var(kd) isa KeyedArray{Float64, 1}
+                    @test parent(var(kd)) == var(d)
+
+                    @test cov(kd) isa KeyedArray{Float64, 2}
+                    @test parent(cov(kd)) == cov(d)
+
+                    @test entropy(kd) == entropy(d)
+                    @test entropy(kd, 2) == entropy(d, 2)
+
+                    @test Distributions._logpdf(kd, m) == Distributions._logpdf(d, m)
+
+                    # statistical functions commute with accessor methods
+                    for f in (mean, var, cov)
+                        @test f(distribution(kd)) == parent(f(kd))
+                    end
                 end
             end
         end
