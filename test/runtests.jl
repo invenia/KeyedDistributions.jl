@@ -195,7 +195,7 @@ using Test
         @testset "Matrix-variate" begin
             d = Wishart(7.0, Matrix(1.0I, 2, 2))
             md = KeyedDistribution(d, (["x1", "x2"], ["y1", "y2"]))
-            rng() = StableRNG(1)
+            get_rng() = StableRNG(1)
 
             @test md isa MatrixDistribution
             @test length(md) == length(d) == 4
@@ -203,8 +203,8 @@ using Test
             @test axiskeys(md) == (["x1", "x2"], ["y1", "y2"])
 
             @testset "sample" begin
-                expected = rand(rng(), d)
-                observed = rand(rng(), md)
+                expected = rand(get_rng(), d)
+                observed = rand(get_rng(), md)
                 @test observed isa KeyedArray
                 @test observed == expected
                 @test isapprox(observed("x1", :), expected[1, :])
@@ -212,8 +212,8 @@ using Test
             end
 
             @testset "multi-sample" begin
-                expected = rand(rng(), d, 2)
-                observed = rand(rng(), md, 2)
+                expected = rand(get_rng(), d, 2)
+                observed = rand(get_rng(), md, 2)
                 @test observed isa KeyedArray
                 @test observed == expected
                 @test axiskeys(observed) == (Base.OneTo(2),)
@@ -227,15 +227,15 @@ using Test
         @testset "Sampleable not <:Distribution" begin
             samp = Distributions.MultinomialSampler(5, [0.5, 0.5])
             ksamp = KeyedSampleable(samp, ["number1", "number2"])
-            rng = StableRNG(1)
+            get_rng = StableRNG(1)
 
             @test ksamp isa Sampleable
             @test !(ksamp isa Distribution)
             @test axiskeys(ksamp) == (["number1", "number2"], )
             @test length(ksamp) == length(samp) == 2
 
-            @test rand(rng, ksamp) == [3, 2]
-            @test rand(rng, ksamp, 2) == [1 1; 4 4]
+            @test rand(get_rng, ksamp) == [3, 2]
+            @test rand(get_rng, ksamp, 2) == [1 1; 4 4]
         end
     end
 
