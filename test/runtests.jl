@@ -195,7 +195,7 @@ using Test
         @testset "Matrix-variate" begin
             d = Wishart(7.0, Matrix(1.0I, 2, 2))
             md = KeyedDistribution(d, (["x1", "x2"], ["y1", "y2"]))
-            rng = StableRNG(1)
+            rng() = StableRNG(1)
 
             @test md isa MatrixDistribution
             @test length(md) == length(d) == 4
@@ -203,31 +203,19 @@ using Test
             @test axiskeys(md) == (["x1", "x2"], ["y1", "y2"])
 
             @testset "sample" begin
-                expected = [
-                    4.297085163636559 1.56068948064492;
-                    1.56068948064492 3.2551163032762327
-                ]
-                observed = rand(rng, md)
+                expected = rand(rng(), d)
+                observed = rand(rng(), md)
                 @test observed isa KeyedArray
-                @test isapprox(observed, expected)
+                @test observed == expected
                 @test isapprox(observed("x1", :), expected[1, :])
                 @test axiskeys(observed) == axiskeys(md)
             end
 
             @testset "multi-sample" begin
-                expected = [
-                    [
-                        5.101756995976702 1.5259058298054273;
-                        1.5259058298054273 5.7195801045537005
-                    ],
-                    [
-                        6.885865356548204 -3.9375283988601923;
-                        -3.9375283988601923 8.344812881840886
-                    ]
-                ]
-                observed = rand(rng, md, 2)
+                expected = rand(rng(), d, 2)
+                observed = rand(rng(), md, 2)
                 @test observed isa KeyedArray
-                @test isapprox(observed, expected)
+                @test observed == expected
                 @test axiskeys(observed) == (Base.OneTo(2),)
 
                 @test observed[1] isa KeyedArray
