@@ -241,12 +241,12 @@ using Test
 
     @testset "Invalid keys $T" for T in (KeyedDistribution, KeyedSampleable)
         # Wrong number of keys
-        @test_throws ArgumentError T(MvNormal(ones(3)), ["foo"])
+        @test_throws ArgumentError T(MvNormal(I(3)), ["foo"])
         # Wrong key lengths
-        @test_throws ArgumentError T(MvNormal(ones(3)), ([:a, :b, :c], [:x]))
+        @test_throws ArgumentError T(MvNormal(I(3)), ([:a, :b, :c], [:x]))
         @test_throws ArgumentError T(Wishart(7.0, Matrix(1.0I, 2, 2)), (["foo"], ["bar"]))
         # AxisKeys requires key vectors to be AbstractVector
-        @test_throws MethodError T(MvNormal(ones(3)), (:a, :b, :c))
+        @test_throws MethodError T(MvNormal(I(3)), (:a, :b, :c))
     end
 
     @testset "marginalising" begin
