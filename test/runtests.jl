@@ -195,7 +195,7 @@ using Test
         @testset "Matrix-variate" begin
             d = Wishart(7.0, Matrix(1.0I, 2, 2))
             md = KeyedDistribution(d, (["x1", "x2"], ["y1", "y2"]))
-            rng = StableRNG(1)
+            get_rng() = StableRNG(1)
 
             @test md isa MatrixDistribution
             @test length(md) == length(d) == 4
@@ -203,31 +203,19 @@ using Test
             @test axiskeys(md) == (["x1", "x2"], ["y1", "y2"])
 
             @testset "sample" begin
-                expected = [
-                    4.297085163636559 -1.7486034270372186;
-                    -1.7486034270372186 8.375810638889545
-                ]
-                observed = rand(rng, md)
+                expected = rand(get_rng(), d)
+                observed = rand(get_rng(), md)
                 @test observed isa KeyedArray
-                @test isapprox(observed, expected)
+                @test observed == expected
                 @test isapprox(observed("x1", :), expected[1, :])
                 @test axiskeys(observed) == axiskeys(md)
             end
 
             @testset "multi-sample" begin
-                expected = [
-                    [
-                        16.39083916144797 4.884197412188479;
-                        4.884197412188479 12.95839907390519
-                    ],
-                    [
-                        4.0427728985772635 -1.3588065996380645;
-                        -1.3588065996380645 11.285037150960932
-                    ]
-                ]
-                observed = rand(rng, md, 2)
+                expected = rand(get_rng(), d, 2)
+                observed = rand(get_rng(), md, 2)
                 @test observed isa KeyedArray
-                @test isapprox(observed, expected)
+                @test observed == expected
                 @test axiskeys(observed) == (Base.OneTo(2),)
 
                 @test observed[1] isa KeyedArray
@@ -239,26 +227,26 @@ using Test
         @testset "Sampleable not <:Distribution" begin
             samp = Distributions.MultinomialSampler(5, [0.5, 0.5])
             ksamp = KeyedSampleable(samp, ["number1", "number2"])
-            rng = StableRNG(1)
+            get_rng = StableRNG(1)
 
             @test ksamp isa Sampleable
             @test !(ksamp isa Distribution)
             @test axiskeys(ksamp) == (["number1", "number2"], )
             @test length(ksamp) == length(samp) == 2
 
-            @test rand(rng, ksamp) == [3, 2]
-            @test rand(rng, ksamp, 2) == [1 1; 4 4]
+            @test rand(get_rng, ksamp) == [3, 2]
+            @test rand(get_rng, ksamp, 2) == [1 1; 4 4]
         end
     end
 
     @testset "Invalid keys $T" for T in (KeyedDistribution, KeyedSampleable)
         # Wrong number of keys
-        @test_throws ArgumentError T(MvNormal(ones(3)), ["foo"])
+        @test_throws ArgumentError T(MvNormal(I(3)), ["foo"])
         # Wrong key lengths
-        @test_throws ArgumentError T(MvNormal(ones(3)), ([:a, :b, :c], [:x]))
+        @test_throws ArgumentError T(MvNormal(I(3)), ([:a, :b, :c], [:x]))
         @test_throws ArgumentError T(Wishart(7.0, Matrix(1.0I, 2, 2)), (["foo"], ["bar"]))
         # AxisKeys requires key vectors to be AbstractVector
-        @test_throws MethodError T(MvNormal(ones(3)), (:a, :b, :c))
+        @test_throws MethodError T(MvNormal(I(3)), (:a, :b, :c))
     end
 
     @testset "marginalising" begin
