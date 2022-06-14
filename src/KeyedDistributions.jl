@@ -101,7 +101,7 @@ function Base.getindex(d::KeyedMvNormal, i::Integer)::KeyedDistribution
 end
 
 function Base.getindex(d::KeyedGenericMvTDist, i::Vector)::KeyedGenericMvTDist
-    return KeyedDistribution(MvTDist(d.d.df, d.d.μ[i], submat(d.d.Σ, i)), axiskeys(d)[1][i])
+    return KeyedDistribution(GenericMvTDist(d.d.df, d.d.μ[i], submat(d.d.Σ, i)), axiskeys(d)[1][i])
 end
 
 # Access methods
