@@ -315,7 +315,7 @@ using Test
 
             d13 = KeyedDistribution(GenericMvTDist(3, m[[1, 3]], submat(W, [1, 3])), [1, 3])
             @test d([1, 3]) == d[[1, 3]] == d13
-            @test d13.d.Σ isa WoodburyPDMat
+            @test d([1, 3]).d.Σ isa WoodburyPDMat
 
             @test d([1]) == d[[1]] == KeyedDistribution(GenericMvTDist(3, m[[1]], submat(W, [1])), [1])
         end
