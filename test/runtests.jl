@@ -257,14 +257,11 @@ using Test
         s = cov(X; dims=1)
         keys = ([:a, :b, :c], )
 
-        function _create_woodbury(N, R)
-            A = randn(StableRNG(1234), N, R)
-            D = Diagonal(rand(StableRNG(1234), R,))
-            S = Diagonal(rand(StableRNG(1234), N,))
-            WoodburyPDMat(A, D, S)
-        end
-
-        W = _create_woodbury(3, 2)
+        W = WoodburyPDMat(
+            randn(StableRNG(1234), 3, 2),
+            Diagonal(rand(StableRNG(1234), 2,)),
+            Diagonal(rand(StableRNG(1234), 3,)),
+        )
 
         @testset "KeyedMvNormal constructed with keys" begin
             d = KeyedDistribution(MvNormal(m, s), keys)
