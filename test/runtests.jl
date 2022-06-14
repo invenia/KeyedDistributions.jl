@@ -4,6 +4,7 @@ using Distributions: GenericMvTDist
 using KeyedDistributions
 using LinearAlgebra
 using PDMats: PDMat
+using PDMatsExtras: WoodburyPDMat
 using StableRNGs
 using Statistics
 using Test
@@ -109,8 +110,18 @@ using Test
         s = cov(X; dims=1)
         keys = ([:a, :b, :c], )
 
+        function _create_woodbury(N, R)
+            A = randn(StableRNG(1234), N, R)
+            D = Diagonal(rand(StableRNG(1234), R,))
+            S = Diagonal(rand(StableRNG(1234), N,))
+            WoodburyPDMat(A, D, S)
+        end
+
+        W = _create_woodbury(3, 2)
+
         _make_dist(::Type{MvNormal}, m, s) = MvNormal(m, s)
-        _make_dist(::Type{GenericMvTDist}, m, s) = GenericMvTDist(3, m, PDMat(s))
+        _make_dist(::Type{MvTDist}, m, s) = MvTDist(3, m, s)
+        _make_dist(::Type{GenericMvTDist}, m, s) = GenericMvTDist(3, m, W)
 
         @testset "$D" for D in (MvNormal, GenericMvTDist)
 
