@@ -4,7 +4,7 @@ using Distributions: GenericMvTDist
 using KeyedDistributions
 using LinearAlgebra
 using PDMats: PDMat
-using PDMatsExtras: WoodburyPDMat
+using PDMatsExtras: WoodburyPDMat, submat
 using StableRNGs
 using Statistics
 using Test
@@ -110,18 +110,8 @@ using Test
         s = cov(X; dims=1)
         keys = ([:a, :b, :c], )
 
-        function _create_woodbury(N, R)
-            A = randn(StableRNG(1234), N, R)
-            D = Diagonal(rand(StableRNG(1234), R,))
-            S = Diagonal(rand(StableRNG(1234), N,))
-            WoodburyPDMat(A, D, S)
-        end
-
-        W = _create_woodbury(3, 2)
-
         _make_dist(::Type{MvNormal}, m, s) = MvNormal(m, s)
-        _make_dist(::Type{MvTDist}, m, s) = MvTDist(3, m, s)
-        _make_dist(::Type{GenericMvTDist}, m, s) = GenericMvTDist(3, m, W)
+        _make_dist(::Type{GenericMvTDist}, m, s) = GenericMvTDist(3, m, PDMat(s))
 
         @testset "$D" for D in (MvNormal, GenericMvTDist)
 
@@ -267,6 +257,15 @@ using Test
         s = cov(X; dims=1)
         keys = ([:a, :b, :c], )
 
+        function _create_woodbury(N, R)
+            A = randn(StableRNG(1234), N, R)
+            D = Diagonal(rand(StableRNG(1234), R,))
+            S = Diagonal(rand(StableRNG(1234), N,))
+            WoodburyPDMat(A, D, S)
+        end
+
+        W = _create_woodbury(3, 2)
+
         @testset "KeyedMvNormal constructed with keys" begin
             d = KeyedDistribution(MvNormal(m, s), keys)
             @test d([:a, :b, :c]) == d[[1, 2, 3]] == d
@@ -289,6 +288,7 @@ using Test
             @test d(1) == d[1] == KeyedDistribution(Normal(m[1], s[1, 1]), [1])
         end
 
+
         @testset "KeyedMvTDist constructed with keys" begin
             d = KeyedDistribution(MvTDist(3, m, s), keys)
             @test d([:a, :b, :c]) == d[[1, 2, 3]] == d
@@ -309,5 +309,15 @@ using Test
             @test d([1]) == d[[1]] == KeyedDistribution(MvTDist(3, m[[1]], s[[1], [1]]), [1])
         end
 
+        @testset "KeyedGenericMvTDist with WoodburyPDMat" begin
+            d = KeyedDistribution(GenericMvTDist(3, m, W))
+            @test d([1, 2, 3]) == d[[1, 2, 3]] == d
+
+            d13 = KeyedDistribution(GenericMvTDist(3, m[[1, 3]], submat(W, [1, 3])), [1, 3])
+            @test d([1, 3]) == d[[1, 3]] == d13
+            @test d13.d.Σ isa WoodburyPDMat
+
+            @test d([1]) == d[[1]] == KeyedDistribution(GenericMvTDist(3, m[[1]], submat(W, [1])), [1])
+        end
     end
 end
