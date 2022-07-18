@@ -143,6 +143,9 @@ using Test
                     @test cov(kd) isa KeyedArray{Float64, 2}
                     @test parent(cov(kd)) == cov(d)
 
+                    @test cor(kd) isa KeyedArray{Float64, 2}
+                    @test parent(cor(kd)) == cor(d)
+
                     @test entropy(kd) == entropy(d)
                     @test entropy(kd, 2) == entropy(d, 2)
 

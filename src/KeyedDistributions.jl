@@ -185,9 +185,11 @@ Distributions.mean(d::KeyedDistribution) = KeyedArray(mean(distribution(d)), axi
 
 Distributions.var(d::KeyedDistribution) = KeyedArray(var(distribution(d)), axiskeys(d))
 
-function Distributions.cov(d::KeyedDistribution)
-    keys = vcat(axiskeys(d)...)
-    return KeyedArray(cov(distribution(d)), (keys, keys))
+for f in (:cov, :cor)
+    @eval function Distributions.$f(d::KeyedDistribution)
+        keys = vcat(axiskeys(d)...)
+        return KeyedArray($f(distribution(d)), (keys, keys))
+    end
 end
 
 Distributions.entropy(d::KeyedDistribution) = entropy(distribution(d))
