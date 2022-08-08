@@ -129,6 +129,9 @@ using Test
                     @test kd isa Distribution
                     @test distribution(kd) == d
                     @test axiskeys(kd) == keys
+                    @test AxisKeys.haskeys(kd)
+                    @test AxisKeys.keyless(kd) == d
+                    @test AxisKeys.keyless_unname(kd) == d
                     @test sampler(kd) == sampler(d)
                     @test eltype(kd) == eltype(d) == Float64
                 end
