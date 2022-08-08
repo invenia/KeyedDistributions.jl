@@ -123,6 +123,12 @@ Return the keys for the variates of the `KeyedDistribution` or `KeyedSampleable`
 """
 AxisKeys.axiskeys(d::KeyedDistOrSampleable) = d.keys
 
+# Extend AxisKeys function for determining if a type has axis keys and can be generically
+# unwrapped using keyless or keyless_unname.
+AxisKeys.haskeys(d::KeyedDistOrSampleable) = true
+AxisKeys.keyless(d::KeyedDistOrSampleable) = distribution(d)
+AxisKeys.keyless_unname(d::KeyedDistOrSampleable) = distribution(d)
+
 # Standard functions to overload for new Distribution and/or Sampleable
 # https://juliastats.org/Distributions.jl/latest/extends/#Create-New-Samplers-and-Distributions
 
