@@ -322,5 +322,12 @@ using Test
 
             @test d([1]) == d[[1]] == KeyedDistribution(GenericMvTDist(3, m[[1]], submat(W, [1])), [1])
         end
+
+        @testset "Mixture of KeyedMvNormal{AbstractArra, PDMats}" begin
+            k = ["a", "b", "c"]
+            d = KeyedDistribution(MvNormal(m, W), k)
+            kmd = KeyedDistribution(MixtureModel([d, d], [0.5, 0.5]), k)
+            @test Distributions.logpdf(kmd, zeros(3)) == Distributions.logpdf(d, zeros(3))
+        end
     end
 end
