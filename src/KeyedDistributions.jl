@@ -33,8 +33,8 @@ for T in (:Distribution, :Sampleable)
         matrix-variate distributions.
         The length of each key vector in must match the length along each dimension.
 
-        !!! Note
-            For distributions that can be marginalized exactly, the $($KeyedT)) can be
+        !!! note
+            For distributions that can be marginalized exactly, the $($KeyedT) can be
             marginalised via the indexing or lookup syntax just like `KeyedArray`s.
             i.e. One can use square or round brackets to retain certain indices or keys and
             marginalise out the others. For example for `D::KeyedMvNormal` over `:a, :b, :c`:
