@@ -5,6 +5,7 @@ using AxisKeys
 using Distributions
 using Distributions: GenericMvTDist
 using LinearAlgebra: Symmetric
+using NamedDims
 using PDMatsExtras: submat
 using Random: AbstractRNG
 
@@ -17,20 +18,24 @@ for T in (:Distribution, :Sampleable)
     @eval begin
         """
             $($KeyedT)(d<:$($T), keys::Tuple{Vararg{AbstractVector}})
+            $($KeyedT)(d<:$($T); named_keys...)
 
-        Stores `keys` for each variate alongside the `$($T)` `d`,
-        supporting all of the common functions of a `$($T)`.
-        Common functions that return an `AbstractArray`, such as `rand`,
-        will return a `KeyedArray` with keys derived from the `$($T)`.
+        Stores the `keys` (and dimnames if using `named_keys` kwargs) for each variate
+        alongside the `$($T)` `d`, supporting all of the common functions of a `$($T)` and
+        `KeyedArray`.
+
+        Common functions that return an `AbstractArray`, such as `rand`, will return a
+        `KeyedArray` with keys and dimnames derived from the `$($T)`.
 
         The type of `keys` is restricted to be consistent with
         [AxisKeys.jl](https://github.com/mcabbott/AxisKeys.jl).
-        The length of the `keys` tuple must be the number of dimensions, which is 1 for
-        univariate and multivariate distributions, and 2 for matrix-variate distributions.
+        The length of the `keys` tuple or number of `named_keys` must equal the number of
+        dimensions, which is 1 for univariate and multivariate distributions, and 2 for
+        matrix-variate distributions.
         The length of each key vector in must match the length along each dimension.
 
-        !!! Note
-            For distributions that can be marginalized exactly, the $($KeyedT)) can be
+        !!! note
+            For distributions that can be marginalized exactly, the $($KeyedT) can be
             marginalised via the indexing or lookup syntax just like `KeyedArray`s.
             i.e. One can use square or round brackets to retain certain indices or keys and
             marginalise out the others. For example for `D::KeyedMvNormal` over `:a, :b, :c`:
@@ -39,7 +44,7 @@ for T in (:Distribution, :Sampleable)
              - `D([:a, :b])` or `D[[1, 2]]` will marginalise out `:c` and return a
                `KeyedMvNormal` over `:a, :b`.
         """
-        @auto_hash_equals struct $KeyedT{F<:VariateForm, S<:ValueSupport, D<:$T{F, S}} <: $T{F, S}
+        @auto_hash_equals struct $KeyedT{F<:VariateForm, S<:ValueSupport, D<:$T{F, S}, L} <: $T{F, S}
             d::D
             keys::Tuple{Vararg{AbstractVector}}
 
@@ -49,8 +54,19 @@ for T in (:Distribution, :Sampleable)
                     "lengths of key vectors $key_lengths must match " *
                     "size of distribution $(_size(d))"
                 ))
+                L = Tuple(:_ for _ in 1:length(key_lengths))
+                return new{F, S, typeof(d), L}(d, keys)
+            end
 
-                return new{F, S, typeof(d)}(d, keys)
+            function $KeyedT(d::$T{F, S}; named_keys...) where {F, S}
+                named_keys = NamedTuple(named_keys)
+                key_lengths = map(length, values(named_keys))
+                key_lengths == _size(d) || throw(ArgumentError(
+                    "lengths of key vectors $key_lengths must match " *
+                    "size of distribution $(_size(d))"
+                ))
+
+                return new{F, S, typeof(d), keys(named_keys)}(d, values(named_keys))
             end
         end
 
@@ -73,10 +89,13 @@ _size(d::Sampleable{<:Matrixvariate}) = size(d)
 """
     KeyedDistribution(d::Distribution)
 
-Constructs a [`KeyedDistribution`](@ref) using the keys of the parameter that matches `size(d)`.
-If the parameter has no keys, uses `1:n` for the length `n` of each dimension.
+Constructs a [`KeyedDistribution`](@ref) using the keys and dimnames of the parameter that
+matches `size(d)`. If the parameter has no keys, uses `1:n` for the length `n` of each dimension.
 """
-KeyedDistribution(d::Distribution) = KeyedDistribution(d, _keys(d))
+function KeyedDistribution(d::Distribution)
+    named_keys = NamedTuple{dimnames(mean(d))}(_keys(d))
+    return KeyedDistribution(d; named_keys...)
+end
 
 _keys(d::Distribution) = _keys(first(filter(x -> size(x) == size(d), params(d))))
 _keys(x::KeyedArray) = axiskeys(x)
@@ -129,6 +148,24 @@ AxisKeys.haskeys(d::KeyedDistOrSampleable) = true
 AxisKeys.keyless(d::KeyedDistOrSampleable) = distribution(d)
 AxisKeys.keyless_unname(d::KeyedDistOrSampleable) = distribution(d)
 
+# NamedDims functionality
+for T in (:Distribution, :Sampleable)
+    KeyedT = Symbol(:Keyed, T)
+    @eval begin
+        NamedDims.dimnames(d::$KeyedT{F,S,D,L}) where {F,S,D,L} = L
+        NamedDims.dim(d::$KeyedT, i) = NamedDims.dim(dimnames(d), i)
+        NamedDims.unname(d::$KeyedT) = $KeyedT(distribution(d), axiskeys(d))
+        function NamedDims.rename(d::$KeyedT, names::Tuple{Vararg{Symbol}})
+            named_keys = NamedTuple{names}(axiskeys(d))
+            return KeyedDistribution(distribution(d); named_keys...)
+        end
+        function NamedDims.rename(d::$KeyedT, pairs::Vararg{Pair{Symbol,Symbol}})
+            new = NamedTuple(n => axiskeys(d)[NamedDims.dim(d, o)] for (o, n) in pairs)
+            return KeyedDistribution(distribution(d); new...)
+        end
+    end
+end
+
 # Standard functions to overload for new Distribution and/or Sampleable
 # https://juliastats.org/Distributions.jl/latest/extends/#Create-New-Samplers-and-Distributions
 
@@ -138,7 +175,8 @@ function Distributions._rand!(
     x::AbstractVector{<:Real}
 )
     sample = Distributions._rand!(rng, distribution(d), x)
-    return KeyedArray(sample, axiskeys(d))
+    named_keys = NamedTuple{dimnames(d)}(axiskeys(d))
+    return KeyedArray(sample; named_keys...)
 end
 
 Base.length(d::KeyedDistOrSampleable) = length(distribution(d))
@@ -170,31 +208,40 @@ _maybe_parent(x::AbstractArray) = parent(x)
 function Base.rand(rng::AbstractRNG, d::KeyedDistOrSampleable)
     sample = rand(rng, distribution(d))
     ndims(sample) == 0 && return sample  # univariate returns a Number
-    return KeyedArray(sample, axiskeys(d))
+    return KeyedArray(NamedDimsArray(sample, dimnames(d)), axiskeys(d))
 end
 
 function Base.rand(rng::AbstractRNG, d::KeyedDistOrSampleable, n::Int)
     samples = rand(rng, distribution(d), n)
-    ndims(samples) == 1 && return KeyedArray(samples, Base.OneTo(n))  # univariate
-    return KeyedArray(samples, (first(axiskeys(d)), Base.OneTo(n)))
+    if ndims(samples) == 1  # univariate case
+        return KeyedArray(NamedDimsArray(samples, (:sample,)), (Base.OneTo(n),))
+    end
+    names = (dimnames(d)..., :sample)
+    keys = (axiskeys(d)..., Base.OneTo(n))
+    return KeyedArray(NamedDimsArray(samples, names), keys)
 end
 
 function Base.rand(rng::AbstractRNG, d::KeyedDistribution{<:Matrixvariate}, n::Int)
     # Distributions.rand returns a vector of matrices
-    samples = [KeyedArray(x, axiskeys(d)) for x in rand(rng, distribution(d), n)]
-    return KeyedArray(samples, Base.OneTo(n))
+    samples = [KeyedArray(NamedDimsArray(x, dimnames(d)), axiskeys(d)) for x in rand(rng, distribution(d), n)]
+    return KeyedArray(samples; sample=Base.OneTo(n))
 end
 
 # Statistics functions for Distribution
 
-Distributions.mean(d::KeyedDistribution) = KeyedArray(mean(distribution(d)), axiskeys(d))
+function Distributions.mean(d::KeyedDistribution)
+    m = AxisKeys.keyless_unname(mean(distribution(d)))
+    KeyedArray(NamedDimsArray(m, dimnames(d)), axiskeys(d))
+end
 
-Distributions.var(d::KeyedDistribution) = KeyedArray(var(distribution(d)), axiskeys(d))
+function Distributions.var(d::KeyedDistribution)
+    KeyedArray(NamedDimsArray(var(distribution(d)), dimnames(d)), axiskeys(d))
+end
 
 for f in (:cov, :cor)
     @eval function Distributions.$f(d::KeyedDistribution)
         keys = vcat(axiskeys(d)...)
-        return KeyedArray($f(distribution(d)), (keys, keys))
+        return KeyedArray(NamedDimsArray($f(distribution(d)), (:_, :_)), (keys, keys))
     end
 end
 
