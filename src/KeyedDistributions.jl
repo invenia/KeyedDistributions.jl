@@ -2,7 +2,6 @@ module KeyedDistributions
 
 using AutoHashEquals
 using AxisKeys
-using AxisKeys: keyless_unname
 using Distributions
 using Distributions: GenericMvTDist
 using LinearAlgebra: Symmetric
@@ -231,7 +230,7 @@ end
 # Statistics functions for Distribution
 
 function Distributions.mean(d::KeyedDistribution)
-    m = keyless_unname(mean(distribution(d)))
+    m = AxisKeys.keyless_unname(mean(distribution(d)))
     KeyedArray(NamedDimsArray(m, dimnames(d)), axiskeys(d))
 end
 
