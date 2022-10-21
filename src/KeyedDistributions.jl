@@ -160,6 +160,10 @@ for T in (:Distribution, :Sampleable)
             named_keys = NamedTuple{names}(axiskeys(d))
             return KeyedDistribution(distribution(d); named_keys...)
         end
+        function NamedDims.rename(d::$KeyedT, pairs::Vararg{Pair{Symbol,Symbol}})
+            new = NamedTuple(n => axiskeys(d)[NamedDims.dim(d, o)] for (o, n) in pairs)
+            return KeyedDistribution(distribution(d); new...)
+        end
     end
 end
 

@@ -362,5 +362,6 @@ using Test
         @test NamedDims.dim(kd, :id) == 1
         @test dimnames(unname(kd)) == (:_, )
         @test dimnames(rename(kd, (:name,))) == (:name, )
+        @test dimnames(rename(kd, :id => :name)) == (:name, )
     end
 end
