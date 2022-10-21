@@ -146,13 +146,17 @@ AxisKeys.keyless(d::KeyedDistOrSampleable) = distribution(d)
 AxisKeys.keyless_unname(d::KeyedDistOrSampleable) = distribution(d)
 
 # NamedDims functionality
-NamedDims.dimnames(d::KeyedDistribution{F,S,D,L}) where {F,S,D,L} = L
-NamedDims.dimnames(d::KeyedSampleable{F,S,D,L}) where {F,S,D,L} = L
-NamedDims.dim(d::KeyedDistOrSampleable, i) = NamedDims.dim(dimnames(d), i)
-NamedDims.unname(d::K) where K <: KeyedDistOrSampleable = K(distribution(d), axiskeys(d))
-function NamedDims.rename(d::K, names...) where K <: KeyedDistOrSampleable
-    named_keys = NamedTuple{names}(axiskeys(d))
-    return K(distribution(d); named_keys...)
+for T in (:Distribution, :Sampleable)
+    KeyedT = Symbol(:Keyed, T)
+    @eval begin
+        NamedDims.dimnames(d::$KeyedT{F,S,D,L}) where {F,S,D,L} = L
+        NamedDims.dim(d::$KeyedT, i) = NamedDims.dim(dimnames(d), i)
+        NamedDims.unname(d::$KeyedT) = $KeyedT(distribution(d), axiskeys(d))
+        function NamedDims.rename(d::$KeyedT, names::Tuple{VarArg{Symbol}})
+            named_keys = NamedTuple{names}(axiskeys(d))
+            return KeyedDistribution(distribution(d); named_keys...)
+        end
+    end
 end
 
 # Standard functions to overload for new Distribution and/or Sampleable
