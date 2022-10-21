@@ -19,16 +19,18 @@ for T in (:Distribution, :Sampleable)
     @eval begin
         """
             $($KeyedT)(d<:$($T), keys::Tuple{Vararg{AbstractVector}})
+            $($KeyedT)(d<:$($T); named_keys...)
 
-        Stores `keys` for each variate alongside the `$($T)` `d`,
-        supporting all of the common functions of a `$($T)`.
+        Stores the `keys`, and dimnames if suing `named_keys`, for each variate alongside
+        the `$($T)` `d`, supporting all of the common functions of a `$($T)`.
         Common functions that return an `AbstractArray`, such as `rand`,
-        will return a `KeyedArray` with keys derived from the `$($T)`.
+        will return a `KeyedArray` with keys and dimnames derived from the `$($T)`.
 
         The type of `keys` is restricted to be consistent with
         [AxisKeys.jl](https://github.com/mcabbott/AxisKeys.jl).
-        The length of the `keys` tuple must be the number of dimensions, which is 1 for
-        univariate and multivariate distributions, and 2 for matrix-variate distributions.
+        The length of the `keys` tuple or `named_keys` namedtuple must equal the number of
+        dimensions, which is 1 for univariate and multivariate distributions, and 2 for
+        matrix-variate distributions.
         The length of each key vector in must match the length along each dimension.
 
         !!! Note
@@ -86,8 +88,8 @@ _size(d::Sampleable{<:Matrixvariate}) = size(d)
 """
     KeyedDistribution(d::Distribution)
 
-Constructs a [`KeyedDistribution`](@ref) using the keys of the parameter that matches `size(d)`.
-If the parameter has no keys, uses `1:n` for the length `n` of each dimension.
+Constructs a [`KeyedDistribution`](@ref) using the keys and dimnames of the parameter that
+matches `size(d)`. If the parameter has no keys, uses `1:n` for the length `n` of each dimension.
 """
 function KeyedDistribution(d::Distribution)
     named_keys = NamedTuple{dimnames(mean(d))}(_keys(d))
