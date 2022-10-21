@@ -21,14 +21,14 @@ for T in (:Distribution, :Sampleable)
             $($KeyedT)(d<:$($T), keys::Tuple{Vararg{AbstractVector}})
             $($KeyedT)(d<:$($T); named_keys...)
 
-        Stores the `keys`, and dimnames if suing `named_keys`, for each variate alongside
-        the `$($T)` `d`, supporting all of the common functions of a `$($T)`.
+        Stores the `keys`, and dimnames if using `named_keys` kwargs, for each variate
+        alongside the `$($T)` `d`, supporting all of the common functions of a `$($T)`.
         Common functions that return an `AbstractArray`, such as `rand`,
         will return a `KeyedArray` with keys and dimnames derived from the `$($T)`.
 
         The type of `keys` is restricted to be consistent with
         [AxisKeys.jl](https://github.com/mcabbott/AxisKeys.jl).
-        The length of the `keys` tuple or `named_keys` namedtuple must equal the number of
+        The length of the `keys` tuple or number of `named_keys` must equal the number of
         dimensions, which is 1 for univariate and multivariate distributions, and 2 for
         matrix-variate distributions.
         The length of each key vector in must match the length along each dimension.
