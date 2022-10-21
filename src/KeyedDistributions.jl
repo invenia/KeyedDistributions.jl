@@ -154,7 +154,7 @@ for T in (:Distribution, :Sampleable)
         NamedDims.dimnames(d::$KeyedT{F,S,D,L}) where {F,S,D,L} = L
         NamedDims.dim(d::$KeyedT, i) = NamedDims.dim(dimnames(d), i)
         NamedDims.unname(d::$KeyedT) = $KeyedT(distribution(d), axiskeys(d))
-        function NamedDims.rename(d::$KeyedT, names::Tuple{VarArg{Symbol}})
+        function NamedDims.rename(d::$KeyedT, names::Tuple{Vararg{Symbol}})
             named_keys = NamedTuple{names}(axiskeys(d))
             return KeyedDistribution(distribution(d); named_keys...)
         end
