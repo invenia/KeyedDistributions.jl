@@ -364,4 +364,12 @@ using Test
         @test dimnames(rename(kd, (:name,))) == (:name, )
         @test dimnames(rename(kd, :id => :name)) == (:name, )
     end
+
+    @testset "Equality comparison with wrapped type" begin
+        d = MvNormal([1.0, 2.0], [1.0, 1.0]);
+        kd = KeyedDistribution(d, 1:length(d));
+        ks = KeyedSampleable(d, 1:length(d));
+        @test kd == d
+        @test ks == d
+    end
 end
