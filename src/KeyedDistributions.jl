@@ -265,4 +265,13 @@ function Distributions.insupport(d::KeyedDistribution{<:Univariate}, x::Real)
     return insupport(distribution(d), x)
 end
 
+# Overload equality comparison between `KeyedT` and underlying `T`
+for T in (:Distribution, :Sampleable)
+    KeyedT = Symbol(:Keyed, T)
+    @eval begin
+        Base.:(==)(kd::$KeyedT, d::$T) = distribution(kd) == d
+        Base.:(==)(d::$T, kd::$KeyedT) = kd == d
+    end
+end
+
 end
