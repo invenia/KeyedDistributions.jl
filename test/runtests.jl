@@ -212,6 +212,27 @@ using Test
 
             @test isapprox(rand(rng, kd), 0.39349598502717537)
             @test isapprox(rand(rng, kd, 2), [0.519693102856957, 0.6505773044249047])
+
+            @testset "canonform" begin
+                ckd = canonform(kd)
+
+                @test axiskeys(ckd) == axiskeys(kd)
+                @test dimnames(ckd) == dimnames(kd)
+                @test distribution(ckd) == canonform(d)
+            end
+        end
+
+        @testset "Multi-variate" begin
+            d = MvNormal([7.0, 5.0], Matrix([1.0 0.0; 0.0 1.0]))
+
+            @testset "canonform" begin
+                kd = KeyedDistribution(d; dim1=["x1", "x2"])
+                ckd = canonform(kd)
+
+                @test axiskeys(ckd) == axiskeys(kd)
+                @test dimnames(ckd) == dimnames(kd)
+                @test distribution(ckd) == canonform(d)
+            end
         end
 
         @testset "Matrix-variate" begin
