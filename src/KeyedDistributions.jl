@@ -227,7 +227,7 @@ function Distributions.insupport(d::KeyedDistribution{<:Univariate}, x::Real)
     return insupport(distribution(d), x)
 end
 
-function Distributions.MixtureModel(cs::Vector{C}, pri::CT) where {C <: KeyedDistribution,CT<:Distributions.Categorical}
+function Distributions.MixtureModel(cs::Vector{C}, pri::CT) where {C<:KeyedDistribution,CT<:Distributions.Categorical}
     VF = Distributions.variate_form(C)
     VS = Distributions.value_support(C)
     k = cs[1].keys
@@ -238,9 +238,13 @@ function Distributions.MixtureModel(cs::Vector{C}, pri::CT) where {C <: KeyedDis
     return KeyedDistribution(MixtureModel(distribution.(cs), pri), k)
 end
 
-function Distributions.MixtureModel(cs::Vector{C}, pri::CT) where {C <: KeyedDistribution,CT<:AbstractVector{<:Real}}
+function Distributions.MixtureModel(cs::Vector{C}, pri::CT) where {C<:KeyedDistribution,CT<:AbstractVector{<:Real}}
     return MixtureModel(cs, Categorical(pri))
 end
+
+KeyedMixtureModel(cs::Vector{<:KeyedDistribution}, pri::Union{AbstractVector{<:Real}, Distributions.Categorical}) = MixtureModel(cs, pri)
+
+KeyedMixtureModel(mm::MixtureModel, keys::Tuple{Vararg{AbstractVector}}) = KeyedDistribution(mm, keys)
 
 function (mm::KeyedMixtureModel)(keys...) 
     margcomps = map(mm.d.components) do c
