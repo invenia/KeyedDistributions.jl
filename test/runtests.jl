@@ -40,6 +40,8 @@ using Test
             @test MvNormalLike <: MultivariateDistribution
             @test MvTLike <: MultivariateDistribution
 
+            @test KeyedMixtureModel <: Distribution
+
         end
 
         @testset "1-dimensional constructor" begin
@@ -323,11 +325,17 @@ using Test
             @test d([1]) == d[[1]] == KeyedDistribution(GenericMvTDist(3, m[[1]], submat(W, [1])), [1])
         end
 
-        @testset "Mixture of KeyedMvNormal{AbstractArra, PDMats}" begin
-            k = ["a", "b", "c"]
-            d = KeyedDistribution(MvNormal(m, W), k)
-            kmd = KeyedDistribution(MixtureModel([d, d], [0.5, 0.5]), k)
-            @test Distributions.logpdf(kmd, zeros(3)) == Distributions.logpdf(d, zeros(3))
+        @testset "Mixture of KeyedMvNormal{AbstractArray, PDMats}" begin
+            keys = [:a, :b, :c]
+            d = KeyedDistribution(MvNormal(m, W), keys)
+            pri = [0.5, 0.5]
+            mm = KeyedDistribution(MixtureModel([d.d, d.d], pri), keys)
+            mmk = MixtureModel([d, d], pri)
+            @test mm == mmk
+            @test Distributions.logpdf(mm, zeros(3)) == Distributions.logpdf(d, zeros(3))
+            @test cov(mm) == cov(d)
+            @test cov(mm([:a, :b, :c])) ≈ cov(d)
+            @test cov(mm([:a, :c])) ≈ cov(d[[1, 3]])
         end
     end
 end

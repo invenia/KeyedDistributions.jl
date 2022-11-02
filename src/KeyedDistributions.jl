@@ -9,7 +9,7 @@ using PDMatsExtras: submat
 using Random: AbstractRNG
 
 export KeyedDistribution, KeyedSampleable
-export KeyedMvNormal, KeyedGenericMvTDist, MvNormalLike, MvTLike
+export KeyedMvNormal, KeyedGenericMvTDist, MvNormalLike, MvTLike, KeyedMixtureModel
 export axiskeys, distribution
 
 for T in (:Distribution, :Sampleable)
@@ -91,6 +91,9 @@ const MvNormalLike = Union{MvNormal, KeyedMvNormal}
 const KeyedGenericMvTDist = KeyedDistribution{Multivariate, Continuous, <:GenericMvTDist}
 const MvTLike = Union{GenericMvTDist, KeyedGenericMvTDist}
 
+const KeyedMixtureModel = KeyedDistribution{<:VariateForm, <:ValueSupport, <:AbstractMixtureModel}
+const KeyedMixtureLike = Union{MixtureModel, KeyedMixtureModel}
+
 # Use submat to preserve the covariance matrix PDMat type
 function Base.getindex(d::KeyedMvNormal, i::Vector)::KeyedMvNormal
     return KeyedDistribution(MvNormal(d.d.μ[i], submat(d.d.Σ, i)), axiskeys(d)[1][i])
@@ -162,6 +165,12 @@ function Distributions._logpdf(d::KeyedDistribution, x::AbstractArray)
     return Distributions._logpdf(unkeyed_dist, x)
 end
 
+function Distributions._logpdf(d::KeyedMixtureModel, x::AbstractArray)
+    # Assume components of KeyedMixtureModel are unkeyed.
+    unkeyed_dist = distribution(d)
+    return Distributions._logpdf(unkeyed_dist, x)
+end
+
 _maybe_parent(x) = x
 _maybe_parent(x::AbstractArray) = parent(x)
 
@@ -216,6 +225,30 @@ Distributions.cdf(d::KeyedDistribution{<:Univariate}, x::Real) = cdf(distributio
 
 function Distributions.insupport(d::KeyedDistribution{<:Univariate}, x::Real)
     return insupport(distribution(d), x)
+end
+
+function Distributions.MixtureModel(cs::Vector{C}, pri::CT) where {C <: KeyedDistribution,CT<:Distributions.Categorical}
+    VF = Distributions.variate_form(C)
+    VS = Distributions.value_support(C)
+    k = cs[1].keys
+    all(==(k), (c.keys for c in cs)) ||
+        error("Keys of all mixture components must be the same.")
+    length(cs) == ncategories(pri) ||
+        error("The number of components does not match the length of prior.")
+    return KeyedDistribution(MixtureModel(distribution.(cs), pri), k)
+end
+
+function Distributions.MixtureModel(cs::Vector{C}, pri::CT) where {C <: KeyedDistribution,CT<:AbstractVector{<:Real}}
+    return MixtureModel(cs, Categorical(pri))
+end
+
+function (mm::KeyedMixtureModel)(keys...) 
+    margcomps = map(mm.d.components) do c
+        inds = first(map(AxisKeys.findindex, keys, axiskeys(mm)))
+        T = typeof(c)
+        T.name.wrapper(mean(c)[inds], Symmetric(cov(c)[inds, inds]))
+    end
+    return KeyedDistribution(MixtureModel(margcomps), keys)
 end
 
 end
