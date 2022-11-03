@@ -235,7 +235,8 @@ function Distributions.mean(d::KeyedDistribution)
 end
 
 function Distributions.var(d::KeyedDistribution)
-    KeyedArray(NamedDimsArray(var(distribution(d)), dimnames(d)), axiskeys(d))
+    v = AxisKeys.keyless_unname(var(distribution(d)))
+    KeyedArray(NamedDimsArray(v, dimnames(d)), axiskeys(d))
 end
 
 for f in (:cov, :cor)
