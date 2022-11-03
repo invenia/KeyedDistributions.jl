@@ -378,4 +378,12 @@ using Test
         @test ks == d
         @test d == ks
     end
+
+    @testset "mean and var when distribution is backed by KeyedArray" begin
+        ka = KeyedArray(rand(3), down=["a", "b", "c"])
+        kd1 = KeyedDistribution(MvNormal(ka), down=["a", "b", "c"])
+        kd2 = KeyedDistribution(MvNormal(AxisKeys.keyless_unname(ka)), down=["a", "b", "c"])
+        @test mean(kd1) == mean(kd2)
+        @test var(kd1) == var(kd2)
+    end
 end
