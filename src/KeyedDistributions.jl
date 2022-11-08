@@ -148,6 +148,11 @@ AxisKeys.haskeys(d::KeyedDistOrSampleable) = true
 AxisKeys.keyless(d::KeyedDistOrSampleable) = distribution(d)
 AxisKeys.keyless_unname(d::KeyedDistOrSampleable) = distribution(d)
 
+function AxisKeys.named_axiskeys(d::KeyedDistOrSampleable)
+    NT = NamedTuple{dimnames(d)}
+    return NT(axiskeys(d))
+end
+
 # NamedDims functionality
 for T in (:Distribution, :Sampleable)
     KeyedT = Symbol(:Keyed, T)
