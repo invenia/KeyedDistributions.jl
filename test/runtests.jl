@@ -331,7 +331,10 @@ using Test
             pri = [0.5, 0.5]
             mm = KeyedDistribution(MixtureModel([d.d, d.d], pri), keys)
             mmk = MixtureModel([d, d], pri)
+            kmm1 = KeyedMixtureModel([d, d], pri)
+            kmm2 = KeyedMixtureModel(mm.d, axiskeys(d))
             @test mm == mmk
+            @test kmm1 == kmm2
             @test Distributions.logpdf(mm, zeros(3)) == Distributions.logpdf(d, zeros(3))
             @test cov(mm) == cov(d)
             @test cov(mm([:a, :b, :c])) ≈ cov(d)

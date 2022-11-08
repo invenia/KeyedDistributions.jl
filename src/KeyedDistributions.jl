@@ -246,6 +246,8 @@ KeyedMixtureModel(cs::Vector{<:KeyedDistribution}, pri::Union{AbstractVector{<:R
 
 KeyedMixtureModel(mm::MixtureModel, keys::Tuple{Vararg{AbstractVector}}) = KeyedDistribution(mm, keys)
 
+KeyedDistribution(kd::KeyedDistribution, keys) = KeyedDistribution(kd.d, keys)
+
 function (mm::KeyedMixtureModel)(keys...) 
     margcomps = map(mm.d.components) do c
         inds = first(map(AxisKeys.findindex, keys, axiskeys(mm)))
