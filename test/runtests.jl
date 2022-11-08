@@ -368,6 +368,14 @@ using Test
 
             @test d([1]) == d[[1]] == KeyedDistribution(GenericMvTDist(3, m[[1]], submat(W, [1])), [1])
         end
+
+        @testset "construct with distribution backed by KeyedArray" begin
+            ka = wrapdims(rand(3); t=["a", "b", "c"])
+            mvn = MvNormal(ka, ones(3))
+            @test_throws ArgumentError KeyedDistribution(mvn, ["a", "b", "not c"])
+            @test_throws ArgumentError KeyedDistribution(mvn; t=["a", "b", "not c"])
+            @test_throws ArgumentError KeyedDistribution(mvn; not_t=["a", "b", "c"])
+        end
     end
 
     @testset "NamedDims functions" begin

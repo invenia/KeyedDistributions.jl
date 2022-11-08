@@ -54,6 +54,12 @@ for T in (:Distribution, :Sampleable)
                     "lengths of key vectors $key_lengths must match " *
                     "size of distribution $(_size(d))"
                 ))
+                if d isa Distribution && mean(d) isa KeyedArray && !(axiskeys(mean(d)) == keys)
+                    throw(ArgumentError(
+                        "Distribution keys $(axiskeys(mean(d))) do not match " *
+                        "KeyedDistribution keys $(keys)"
+                    ))
+                end
                 L = Tuple(:_ for _ in 1:length(key_lengths))
                 return new{F, S, typeof(d), L}(d, keys)
             end
@@ -65,6 +71,12 @@ for T in (:Distribution, :Sampleable)
                     "lengths of key vectors $key_lengths must match " *
                     "size of distribution $(_size(d))"
                 ))
+                if d isa Distribution && mean(d) isa KeyedArray && !(named_axiskeys(mean(d)) == named_keys)
+                    throw(ArgumentError(
+                        "Distribution keys $(named_axiskeys(mean(d))) do not match " *
+                        "KeyedDistribution keys $(named_keys)"
+                    ))
+                end
 
                 return new{F, S, typeof(d), keys(named_keys)}(d, values(named_keys))
             end
