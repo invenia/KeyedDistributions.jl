@@ -246,7 +246,8 @@ KeyedMixtureModel(cs::Vector{<:KeyedDistribution}, pri::Union{AbstractVector{<:R
 
 KeyedMixtureModel(mm::MixtureModel, keys::Tuple{Vararg{AbstractVector}}) = KeyedDistribution(mm, keys)
 
-KeyedDistribution(kd::KeyedDistribution, keys) = KeyedDistribution(kd.d, keys)
+# Avoid the double wrap
+KeyedDistribution(kd::KeyedDistribution, keys::Tuple{Vararg{AbstractVector{T} where T, N} where N}) = KeyedDistribution(kd.d, keys)
 
 function (mm::KeyedMixtureModel)(keys...) 
     margcomps = map(mm.d.components) do c
