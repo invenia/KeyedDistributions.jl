@@ -64,6 +64,7 @@ using Test
                 @test distribution(kd) == d
                 @test axiskeys(kd) == keys
                 @test dimnames(kd) == names
+                @test named_axiskeys(kd) == named_keys
                 @test length(kd) == length(d) == 3
                 @test isequal(kd, T(d; id=[:a, :b, :c]))
                 @test params(kd) == params(d) == (m, s)
