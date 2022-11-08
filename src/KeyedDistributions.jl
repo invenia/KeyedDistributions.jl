@@ -249,6 +249,11 @@ end
 Distributions.entropy(d::KeyedDistribution) = entropy(distribution(d))
 Distributions.entropy(d::KeyedDistribution, b::Real) = entropy(distribution(d), b)
 
+function Distributions.canonform(d::KeyedDistribution)
+    named_keys = NamedTuple{dimnames(d)}(axiskeys(d)) # Define/exists a shorthand for this?
+    return KeyedDistribution(canonform(distribution(d)); named_keys...)
+end
+
 # Univariate Distributions only
 
 for f in (:logpdf, :quantile, :mgf, :cf)
