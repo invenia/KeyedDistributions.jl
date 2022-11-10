@@ -180,7 +180,7 @@ function Distributions._rand!(
     x::AbstractVector{<:Real}
 )
     sample = Distributions._rand!(rng, distribution(d), x)
-    named_keys = NamedTuple{dimnames(d)}(axiskeys(d))
+    named_keys = named_axiskeys(d)
     return KeyedArray(sample; named_keys...)
 end
 
@@ -255,7 +255,7 @@ Distributions.entropy(d::KeyedDistribution) = entropy(distribution(d))
 Distributions.entropy(d::KeyedDistribution, b::Real) = entropy(distribution(d), b)
 
 function Distributions.canonform(d::KeyedDistribution)
-    named_keys = NamedTuple{dimnames(d)}(axiskeys(d)) # Define/exists a shorthand for this?
+    named_keys = named_axiskeys(d)
     return KeyedDistribution(canonform(distribution(d)); named_keys...)
 end
 
