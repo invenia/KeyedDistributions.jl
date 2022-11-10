@@ -110,9 +110,9 @@ end
 function Base.getindex(mm::KeyedMixtureModel, i::Vector)::KeyedMixtureModel
     margcomps = map(mm.d.components) do c
         T = typeof(c)
-        T.name.wrapper(mean(c)[inds], Symmetric(cov(c)[i, i]))
+        T.name.wrapper(mean(c)[i], Symmetric(cov(c)[i, i]))
     end
-    return KeyedDistribution(MixtureModel(margcomps), keys[i])
+    return KeyedDistribution(MixtureModel(margcomps), mm.keys[1][i])
 end
 
 
