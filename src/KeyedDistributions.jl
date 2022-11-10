@@ -107,6 +107,15 @@ function Base.getindex(d::KeyedGenericMvTDist, i::Vector)::KeyedGenericMvTDist
     return KeyedDistribution(GenericMvTDist(d.d.df, d.d.μ[i], submat(d.d.Σ, i)), axiskeys(d)[1][i])
 end
 
+function Base.getindex(mm::KeyedMixtureModel, i::Vector)::KeyedGenericMvTDist
+    margcomps = map(mm.d.components) do c
+        T = typeof(c)
+        T.name.wrapper(mean(c)[inds], Symmetric(cov(c)[i, i]))
+    end
+    return KeyedDistribution(MixtureModel(margcomps), keys[i])
+end
+
+
 # Access methods
 
 """
