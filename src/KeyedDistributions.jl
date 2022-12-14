@@ -9,7 +9,7 @@ using PDMatsExtras: submat
 using Random: AbstractRNG
 
 export KeyedDistribution, KeyedSampleable
-export KeyedMvNormal, KeyedGenericMvTDist, MvNormalLike, MvTLike, KeyedMixtureModel
+export KeyedMvNormal, KeyedGenericMvTDist, MvNormalLike, MvTLike, KeyedMixtureModel, MixtureModelLike
 export axiskeys, distribution
 
 for T in (:Distribution, :Sampleable)
