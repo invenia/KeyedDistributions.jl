@@ -93,7 +93,7 @@ const KeyedGenericMvTDist = KeyedDistribution{Multivariate, Continuous, <:Generi
 const MvTLike = Union{GenericMvTDist, KeyedGenericMvTDist}
 
 const KeyedMixtureModel = KeyedDistribution{<:VariateForm, <:ValueSupport, <:AbstractMixtureModel}
-const KeyedMixtureLike = Union{MixtureModel, KeyedMixtureModel}
+const MixtureLike = Union{MixtureModel, KeyedMixtureModel}
 
 # Use submat to preserve the covariance matrix PDMat type
 function Base.getindex(d::KeyedMvNormal, i::Vector)::KeyedMvNormal
