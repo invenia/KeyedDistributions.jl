@@ -112,7 +112,7 @@ function Base.getindex(mm::KeyedMixtureModel, i::Vector)::KeyedMixtureModel
         T = typeof(c)
         T.name.wrapper(mean(c)[i], Symmetric(cov(c)[i, i]))
     end
-    return KeyedDistribution(MixtureModel(margcomps), mm.keys[1][i])
+    return KeyedDistribution(MixtureModel(margcomps), only(axiskey(mm))[i])
 end
 
 
