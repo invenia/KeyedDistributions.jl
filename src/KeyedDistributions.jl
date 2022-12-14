@@ -271,7 +271,7 @@ KeyedDistribution(kd::KeyedDistribution, keys::Tuple{Vararg{AbstractVector{T} wh
 function (mm::KeyedMixtureModel)(keys...) 
     margcomps = map(mm.d.components) do c
         inds = first(map(AxisKeys.findindex, keys, axiskeys(mm)))
-        _marginalize(c, inds)
+        _marginalize(distribution(c), inds)
     end
     return KeyedDistribution(MixtureModel(margcomps), keys)
 end
