@@ -261,15 +261,24 @@ function Distributions.MixtureModel(cs::Vector{C}, pri::CT) where {C<:KeyedDistr
     return MixtureModel(cs, Categorical(pri))
 end
 
-KeyedMixtureModel(cs::Vector{<:KeyedDistribution}, pri::Union{AbstractVector{<:Real}, Distributions.Categorical}) = MixtureModel(cs, pri)
+function KeyedMixtureModel(
+    cs::Vector{<:KeyedDistribution},
+    pri::Union{AbstractVector{<:Real},Distributions.Categorical},
+)
+    return MixtureModel(cs, pri)
+end
 
-KeyedMixtureModel(mm::MixtureModel, keys::Tuple{Vararg{AbstractVector}}) = KeyedDistribution(mm, keys)
+function KeyedMixtureModel(mm::MixtureModel, keys::Tuple{Vararg{AbstractVector}})
+    return KeyedDistribution(mm, keys)
+end
 
 # Avoid the double wrap
 KeyedDistribution(kd::KeyedDistribution, keys::Tuple{Vararg{AbstractVector{T} where T, N} where N}) = KeyedDistribution(kd.d, keys)
 
+Distributions.components(kd::KeyedMixtureModel) = Distributions.components(kd.d)
+
 function (mm::KeyedMixtureModel)(keys...) 
-    margcomps = map(mm.d.components) do c
+    margcomps = map(Distributions.components(mm)) do c
         inds = first(map(AxisKeys.findindex, keys, axiskeys(mm)))
         _marginalize(c, inds)
     end
