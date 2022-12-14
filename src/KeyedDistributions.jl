@@ -10,7 +10,7 @@ using PDMatsExtras: submat
 using Random: AbstractRNG
 
 export KeyedDistribution, KeyedSampleable
-export KeyedMvNormal, KeyedGenericMvTDist, MvNormalLike, MvTLike, KeyedMixtureModel
+export KeyedMvNormal, KeyedGenericMvTDist, MvNormalLike, MvTLike, KeyedMixtureModel, MixtureModelLike
 export axiskeys, distribution
 
 for T in (:Distribution, :Sampleable)
@@ -120,9 +120,9 @@ end
 
 function Base.getindex(mm::KeyedMixtureModel, i::Vector)::KeyedMixtureModel
     margcomps = map(mm.d.components) do c
-        _marginalize(distribution(c), i)
+        _marginalize(c, i)
     end
-    return KeyedDistribution(MixtureModel(margcomps), mm.keys[1][i])
+    return KeyedDistribution(MixtureModel(margcomps), only(axiskey(mm))[i])
 end
 
 
@@ -271,7 +271,7 @@ KeyedDistribution(kd::KeyedDistribution, keys::Tuple{Vararg{AbstractVector{T} wh
 function (mm::KeyedMixtureModel)(keys...) 
     margcomps = map(mm.d.components) do c
         inds = first(map(AxisKeys.findindex, keys, axiskeys(mm)))
-        _marginalize(distribution(c), inds)
+        _marginalize(c, inds)
     end
     return KeyedDistribution(MixtureModel(margcomps), keys)
 end

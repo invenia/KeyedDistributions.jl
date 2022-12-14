@@ -360,5 +360,3 @@ using Test
         end
     end
 end
-cov(mm([:a, :b, :c]))
-mm([:a, :b, :c])
