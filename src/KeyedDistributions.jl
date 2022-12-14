@@ -5,6 +5,7 @@ using AxisKeys
 using Distributions
 using Distributions: GenericMvTDist
 using LinearAlgebra: Symmetric
+using PDMats
 using PDMatsExtras: submat
 using Random: AbstractRNG
 
@@ -107,10 +108,19 @@ function Base.getindex(d::KeyedGenericMvTDist, i::Vector)::KeyedGenericMvTDist
     return KeyedDistribution(GenericMvTDist(d.d.df, d.d.μ[i], submat(d.d.Σ, i)), axiskeys(d)[1][i])
 end
 
+function _marginalize(d::MvNormal, i::Vector)
+    T = typeof(d)
+    return T.name.wrapper(d.μ[i], Symmetric(d.Σ[i, i]))
+end
+
+function _marginalize(d::MvTDist, i::Vector)
+    T = typeof(d)
+    return MvTDist(d.df, d.μ[i], PDMat(Symmetric(d.Σ[i, i])))
+end
+
 function Base.getindex(mm::KeyedMixtureModel, i::Vector)::KeyedMixtureModel
     margcomps = map(mm.d.components) do c
-        T = typeof(c)
-        T.name.wrapper(mean(c)[i], Symmetric(cov(c)[i, i]))
+        _marginalize(distribution(c), i)
     end
     return KeyedDistribution(MixtureModel(margcomps), mm.keys[1][i])
 end
@@ -261,8 +271,7 @@ KeyedDistribution(kd::KeyedDistribution, keys::Tuple{Vararg{AbstractVector{T} wh
 function (mm::KeyedMixtureModel)(keys...) 
     margcomps = map(mm.d.components) do c
         inds = first(map(AxisKeys.findindex, keys, axiskeys(mm)))
-        T = typeof(c)
-        T.name.wrapper(mean(c)[inds], Symmetric(cov(c)[inds, inds]))
+        _marginalize(c, inds)
     end
     return KeyedDistribution(MixtureModel(margcomps), keys)
 end
