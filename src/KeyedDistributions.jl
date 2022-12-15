@@ -257,7 +257,9 @@ function Distributions.MixtureModel(cs::Vector{C}, pri::CT) where {C<:KeyedDistr
     return KeyedDistribution(MixtureModel(distribution.(cs), pri), k)
 end
 
-function Distributions.MixtureModel(cs::Vector{C}, pri::CT) where {C<:KeyedDistribution,CT<:AbstractVector{<:Real}}
+function Distributions.MixtureModel(
+    cs::Vector{C}, pri::CT
+) where {C<:KeyedDistribution,CT<:AbstractVector{<:Real}}
     return MixtureModel(cs, Categorical(pri))
 end
 
