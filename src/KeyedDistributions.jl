@@ -119,7 +119,7 @@ function _marginalize(d::MvTDist, i::Vector)
 end
 
 function Base.getindex(mm::KeyedMixtureModel, i::Vector)::KeyedMixtureModel
-    margcomps = map(mm.d.components) do c
+    margcomps = map(components(mm)) do c
         _marginalize(c, i)
     end
     return KeyedDistribution(MixtureModel(margcomps), only(axiskey(mm))[i])
