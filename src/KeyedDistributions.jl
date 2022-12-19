@@ -130,10 +130,6 @@ function _marginalize(d::MvNormal, i::Vector)::MvNormal
     return MvNormal(d.μ[i], submat(d.Σ, i))
 end
 
-function _marginalize(d::MvNormal, i::Integer)::Normal
-    return Normal(Normal(d.d.μ[i], d.d.Σ[i, i]))
-end
-
 function _marginalize(d::MvTDist, i::Vector)::MvTDist
     T = typeof(d)
     return MvTDist(d.df, d.μ[i], submat(d.Σ, i))
@@ -143,7 +139,7 @@ function Base.getindex(mm::KeyedMixtureModel, i::Vector)::KeyedMixtureModel
     margcomps = map(Distributions.components(mm)) do c
         _marginalize(c, i)
     end
-    return KeyedDistribution(MixtureModel(margcomps), only(axiskey(mm))[i])
+    return KeyedDistribution(MixtureModel(margcomps), only(axiskeys(mm))[i])
 end
 
 
