@@ -93,7 +93,7 @@ const KeyedGenericMvTDist = KeyedDistribution{Multivariate, Continuous, <:Generi
 const MvTLike = Union{GenericMvTDist, KeyedGenericMvTDist}
 
 const KeyedMixtureModel = KeyedDistribution{<:VariateForm, <:ValueSupport, <:AbstractMixtureModel}
-const MixtureLike = Union{MixtureModel, KeyedMixtureModel}
+const MixtureModelLike = Union{MixtureModel, KeyedMixtureModel}
 
 # Use submat to preserve the covariance matrix PDMat type
 function Base.getindex(d::KeyedMvNormal, i::Vector)::KeyedMvNormal
@@ -246,7 +246,9 @@ function Distributions.insupport(d::KeyedDistribution{<:Univariate}, x::Real)
     return insupport(distribution(d), x)
 end
 
-function Distributions.MixtureModel(cs::Vector{C}, pri::CT) where {C<:KeyedDistribution,CT<:Distributions.Categorical}
+function Distributions.MixtureModel(
+    cs::Vector{C}, pri::CT
+) where {C<:KeyedDistribution,CT<:Distributions.Categorical}
     VF = Distributions.variate_form(C)
     VS = Distributions.value_support(C)
     k = cs[1].keys
@@ -275,7 +277,11 @@ function KeyedMixtureModel(mm::MixtureModel, keys::Tuple{Vararg{AbstractVector}}
 end
 
 # Avoid the double wrap
-KeyedDistribution(kd::KeyedDistribution, keys::Tuple{Vararg{AbstractVector{T} where T, N} where N}) = KeyedDistribution(kd.d, keys)
+function KeyedDistribution(
+    kd::KeyedDistribution, keys::Tuple{Vararg{AbstractVector{T} where T,N} where N}
+)
+    return KeyedDistribution(kd.d, keys)
+end
 
 Distributions.components(kd::KeyedMixtureModel) = Distributions.components(kd.d)
 
