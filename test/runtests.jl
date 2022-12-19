@@ -3,6 +3,7 @@ using Distributions
 using Distributions: GenericMvTDist
 using KeyedDistributions
 using LinearAlgebra
+using NamedDims
 using PDMats: PDMat
 using PDMatsExtras: WoodburyPDMat, submat
 using StableRNGs
@@ -16,6 +17,8 @@ using Test
         s = cov(X; dims=1)
         d = MvNormal(m, s)
         keys = ([:a, :b, :c], )
+        names = (:id, )
+        named_keys = NamedTuple{names}(keys)
 
         @testset "subtyping" begin
             @test KeyedDistribution <: Distribution
@@ -29,6 +32,9 @@ using Test
 
             @test KeyedDistribution(d, keys) isa Distribution{Multivariate}
             @test KeyedSampleable(d, keys) isa Sampleable{Multivariate}
+
+            @test KeyedDistribution(d; named_keys...) isa Distribution{Multivariate}
+            @test KeyedSampleable(d; named_keys...) isa Sampleable{Multivariate}
 
             # Input not a Distribution
             @test_throws MethodError KeyedDistribution(X, keys)
@@ -45,24 +51,26 @@ using Test
         end
 
         @testset "1-dimensional constructor" begin
-            @test KeyedDistribution(d, keys[1]) isa KeyedDistribution
-            @test KeyedSampleable(d, keys[1]) isa KeyedSampleable
+            @test KeyedDistribution(d, id=keys[1]) isa KeyedDistribution
+            @test KeyedSampleable(d, id=keys[1]) isa KeyedSampleable
 
             # Input not a Distribution
             @test_throws MethodError KeyedDistribution(X, keys[1])
         end
 
         @testset "$T" for T in (KeyedDistribution, KeyedSampleable)
-            kd = T(d, keys)
+            kd = T(d; named_keys...)
 
             @testset "base functions" begin
                 @test kd isa Sampleable
                 @test distribution(kd) == d
                 @test axiskeys(kd) == keys
+                @test dimnames(kd) == names
+                @test named_axiskeys(kd) == named_keys
                 @test length(kd) == length(d) == 3
-                @test isequal(kd, T(d, [:a, :b, :c]))
+                @test isequal(kd, T(d; id=[:a, :b, :c]))
                 @test params(kd) == params(d) == (m, s)
-                @test ==(kd, T(d, keys))
+                @test ==(kd, T(d; named_keys...))
             end
 
             @testset "sampling" begin
@@ -79,6 +87,7 @@ using Test
                     @test isapprox(observed, expected)
                     @test isapprox(observed(:a), expected[1])
                     @test axiskeys(observed) == axiskeys(kd)
+                    @test dimnames(observed) == dimnames(kd)
                 end
 
                 @testset "one-sample method" begin
@@ -88,6 +97,7 @@ using Test
                     @test isapprox(observed, expected)
                     @test isapprox(observed(:a), expected[1])
                     @test axiskeys(observed) == axiskeys(kd)
+                    @test dimnames(observed) == dimnames(kd)
                 end
 
                 @testset "multi-sample method" begin
@@ -101,6 +111,7 @@ using Test
                     @test isapprox(observed, expected)
                     @test isapprox(observed(:a), expected[1, :])
                     @test axiskeys(observed) == (first(axiskeys(kd)), Base.OneTo(2))
+                    @test dimnames(observed) == (first(dimnames(kd)), :sample)
                 end
             end
         end
@@ -111,6 +122,8 @@ using Test
         m = vec(mean(X; dims=1))
         s = cov(X; dims=1)
         keys = ([:a, :b, :c], )
+        names = (:id,)
+        named_keys = NamedTuple{names}(keys)
 
         _make_dist(::Type{MvNormal}, m, s) = MvNormal(m, s)
         _make_dist(::Type{GenericMvTDist}, m, s) = GenericMvTDist(3, m, PDMat(s))
@@ -118,9 +131,9 @@ using Test
         @testset "$D" for D in (MvNormal, GenericMvTDist)
 
             d = _make_dist(D, m, s)
-            d_keyed = _make_dist(D, KeyedArray(m, keys), s)
+            d_keyed = _make_dist(D, KeyedArray(m; named_keys...), s)
 
-            kd_keys = KeyedDistribution(d, keys)
+            kd_keys = KeyedDistribution(d; named_keys...)
             kd_no_keys = KeyedDistribution(d_keyed)
             kds = (keys=kd_keys, no_keys=kd_no_keys)
 
@@ -131,6 +144,7 @@ using Test
                     @test kd isa Distribution
                     @test distribution(kd) == d
                     @test axiskeys(kd) == keys
+                    @test dimnames(kd) == names
                     @test AxisKeys.haskeys(kd)
                     @test AxisKeys.keyless(kd) == d
                     @test AxisKeys.keyless_unname(kd) == d
@@ -164,20 +178,22 @@ using Test
             end
         end
 
-        @testset "default keys" begin
+        @testset "default keys and dimnames" begin
             kd = KeyedDistribution(MvNormal(m, s))
             @test axiskeys(kd) == (Base.OneTo(3), )
+            @test dimnames(kd) == (:_, )
         end
     end
 
     @testset "Distributions types" begin
         @testset "Univariate" begin
             d = Normal(0.5, 0.2)
-            kd = KeyedDistribution(d, ["variate"])
+            kd = KeyedDistribution(d; id=["variate"])
             rng = StableRNG(1)
 
             @test kd isa UnivariateDistribution
             @test axiskeys(kd) == (["variate"], )
+            @test dimnames(kd) == (:id, )
             @test length(kd) == length(d) == 1
 
             @test logpdf(kd, 1) == logpdf(d, 1) ≈ -2.4345006207705726
@@ -199,17 +215,39 @@ using Test
 
             @test isapprox(rand(rng, kd), 0.39349598502717537)
             @test isapprox(rand(rng, kd, 2), [0.519693102856957, 0.6505773044249047])
+
+            @testset "canonform" begin
+                ckd = canonform(kd)
+
+                @test axiskeys(ckd) == axiskeys(kd)
+                @test dimnames(ckd) == dimnames(kd)
+                @test distribution(ckd) == canonform(d)
+            end
+        end
+
+        @testset "Multi-variate" begin
+            d = MvNormal([7.0, 5.0], Matrix([1.0 0.0; 0.0 1.0]))
+
+            @testset "canonform" begin
+                kd = KeyedDistribution(d; dim1=["x1", "x2"])
+                ckd = canonform(kd)
+
+                @test axiskeys(ckd) == axiskeys(kd)
+                @test dimnames(ckd) == dimnames(kd)
+                @test distribution(ckd) == canonform(d)
+            end
         end
 
         @testset "Matrix-variate" begin
             d = Wishart(7.0, Matrix(1.0I, 2, 2))
-            md = KeyedDistribution(d, (["x1", "x2"], ["y1", "y2"]))
+            md = KeyedDistribution(d; dim1=["x1", "x2"], dim2=["y1", "y2"])
             get_rng() = StableRNG(1)
 
             @test md isa MatrixDistribution
             @test length(md) == length(d) == 4
             @test size(md) == size(d) == (2, 2)
             @test axiskeys(md) == (["x1", "x2"], ["y1", "y2"])
+            @test dimnames(md) == (:dim1, :dim2)
 
             @testset "sample" begin
                 expected = rand(get_rng(), d)
@@ -218,6 +256,7 @@ using Test
                 @test observed == expected
                 @test isapprox(observed("x1", :), expected[1, :])
                 @test axiskeys(observed) == axiskeys(md)
+                @test dimnames(observed) == dimnames(md)
             end
 
             @testset "multi-sample" begin
@@ -226,21 +265,24 @@ using Test
                 @test observed isa KeyedArray
                 @test observed == expected
                 @test axiskeys(observed) == (Base.OneTo(2),)
+                @test dimnames(observed) == (:sample,)
 
                 @test observed[1] isa KeyedArray
                 @test isapprox(observed(1), expected[1])
                 @test axiskeys(observed[1]) == axiskeys(md)
+                @test dimnames(observed[1]) == dimnames(md)
             end
         end
 
         @testset "Sampleable not <:Distribution" begin
             samp = Distributions.MultinomialSampler(5, [0.5, 0.5])
-            ksamp = KeyedSampleable(samp, ["number1", "number2"])
+            ksamp = KeyedSampleable(samp; id=["number1", "number2"])
             get_rng = StableRNG(1)
 
             @test ksamp isa Sampleable
             @test !(ksamp isa Distribution)
             @test axiskeys(ksamp) == (["number1", "number2"], )
+            @test dimnames(ksamp) == (:id,)
             @test length(ksamp) == length(samp) == 2
 
             @test rand(get_rng, ksamp) == [3, 2]
@@ -251,9 +293,12 @@ using Test
     @testset "Invalid keys $T" for T in (KeyedDistribution, KeyedSampleable)
         # Wrong number of keys
         @test_throws ArgumentError T(MvNormal(I(3)), ["foo"])
+        @test_throws ArgumentError T(MvNormal(I(3)); id=["foo"])
         # Wrong key lengths
         @test_throws ArgumentError T(MvNormal(I(3)), ([:a, :b, :c], [:x]))
+        @test_throws ArgumentError T(MvNormal(I(3)); dim1=[:a, :b, :c], dim2=[:x])
         @test_throws ArgumentError T(Wishart(7.0, Matrix(1.0I, 2, 2)), (["foo"], ["bar"]))
+        @test_throws ArgumentError T(Wishart(7.0, Matrix(1.0I, 2, 2)); dim1=["foo"], dim2=["bar"])
         # AxisKeys requires key vectors to be AbstractVector
         @test_throws MethodError T(MvNormal(I(3)), (:a, :b, :c))
     end
@@ -264,6 +309,8 @@ using Test
         m = vec(mean(X; dims=1))
         s = cov(X; dims=1)
         keys = ([:a, :b, :c], )
+        names = (:id,)
+        named_keys = NamedTuple{names}(keys)
 
         W = WoodburyPDMat(
             randn(StableRNG(1234), 3, 2),
@@ -271,18 +318,18 @@ using Test
             Diagonal(rand(StableRNG(1234), 3,)),
         )
 
-        @testset "KeyedMvNormal constructed with keys" begin
-            d = KeyedDistribution(MvNormal(m, s), keys)
+        @testset "KeyedMvNormal constructed with named keys" begin
+            d = KeyedDistribution(MvNormal(m, s); named_keys...)
             @test d([:a, :b, :c]) == d[[1, 2, 3]] == d
 
-            d13 = KeyedDistribution(MvNormal(m[[1, 3]], s[[1, 3], [1, 3]]), [:a, :c])
+            d13 = KeyedDistribution(MvNormal(m[[1, 3]], s[[1, 3], [1, 3]]); id=[:a, :c])
             @test d([:a, :c]) == d[[1, 3]] == d13
 
-            @test d([:a]) == d[[1]] == KeyedDistribution(MvNormal(m[[1]], s[[1], [1]]), [:a])
+            @test d([:a]) == d[[1]] == KeyedDistribution(MvNormal(m[[1]], s[[1], [1]]); id=[:a])
             @test d(:a) == d[1] == KeyedDistribution(Normal(m[1], s[1, 1]), [:a])
         end
 
-        @testset "KeyedMvNormal constructed without keys" begin
+        @testset "KeyedMvNormal constructed without named keys" begin
             d = KeyedDistribution(MvNormal(m, s))
             @test d([1, 2, 3]) == d[[1, 2, 3]] == d
 
@@ -294,17 +341,17 @@ using Test
         end
 
 
-        @testset "KeyedMvTDist constructed with keys" begin
-            d = KeyedDistribution(MvTDist(3, m, s), keys)
+        @testset "KeyedMvTDist constructed with named keys" begin
+            d = KeyedDistribution(MvTDist(3, m, s); named_keys...)
             @test d([:a, :b, :c]) == d[[1, 2, 3]] == d
 
-            d13 = KeyedDistribution(MvTDist(3, m[[1, 3]], s[[1, 3], [1, 3]]), [:a, :c])
+            d13 = KeyedDistribution(MvTDist(3, m[[1, 3]], s[[1, 3], [1, 3]]); id=[:a, :c])
             @test d([:a, :c]) == d[[1, 3]] == d13
 
-            @test d([:a]) == d[[1]] == KeyedDistribution(MvTDist(3, m[[1]], s[[1], [1]]), [:a])
+            @test d([:a]) == d[[1]] == KeyedDistribution(MvTDist(3, m[[1]], s[[1], [1]]); id=[:a])
         end
 
-        @testset "KeyedMvTDist constructed without keys" begin
+        @testset "KeyedMvTDist constructed without named keys" begin
             d = KeyedDistribution(MvTDist(3, m, s))
             @test d([1, 2, 3]) == d[[1, 2, 3]] == d
 
@@ -358,5 +405,43 @@ using Test
             @test cov(mm([:a, :c])) ≈ cov(d[[1, 3]])
             @test cov(mm([:c])) ≈ cov(d[[3]])
         end
+    end
+
+    @testset "NamedDims functions" begin
+        X = rand(StableRNG(1234), 10, 3)
+        m = vec(mean(X; dims=1))
+        s = cov(X; dims=1)
+        keys = ([:a, :b, :c], )
+        names = (:id, )
+        named_keys = NamedTuple{names}(keys)
+
+        kd = KeyedDistribution(MvNormal(m, s); named_keys...)
+
+        @test NamedDims.dim(kd, :id) == 1
+        @test dimnames(unname(kd)) == (:_, )
+        @test dimnames(rename(kd, (:name,))) == (:name, )
+        @test dimnames(rename(kd, :id => :name)) == (:name, )
+    end
+
+    @testset "Equality comparison with wrapped type" begin
+        d = MvNormal([1.0, 2.0], [1.0, 1.0]);
+
+        kd = KeyedDistribution(d, 1:length(d));
+
+        @test kd == d
+        @test d == kd
+
+        ks = KeyedSampleable(d, 1:length(d));
+
+        @test ks == d
+        @test d == ks
+    end
+
+    @testset "mean and var when distribution is backed by KeyedArray" begin
+        ka = KeyedArray(rand(3), down=["a", "b", "c"])
+        kd1 = KeyedDistribution(MvNormal(ka), down=["a", "b", "c"])
+        kd2 = KeyedDistribution(MvNormal(AxisKeys.keyless_unname(ka)), down=["a", "b", "c"])
+        @test mean(kd1) == mean(kd2)
+        @test var(kd1) == var(kd2)
     end
 end
