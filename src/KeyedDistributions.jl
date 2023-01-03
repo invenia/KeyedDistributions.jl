@@ -39,9 +39,9 @@ for T in (:Distribution, :Sampleable)
             marginalised via the indexing or lookup syntax just like `KeyedArray`s.
             i.e. One can use square or round brackets to retain certain indices or keys and
             marginalise out the others. For example for `D::KeyedMvNormal` over `:a, :b, :c`:
-             - `D(:a)` or D(1) will marginalise out `:b, :c` and return a `KeyedNormal`
+             - `D(:a)` or D[1] will marginalise out `:b, :c` and return a `KeyedNormal`
                over `:a`.
-             - `D([:a])` or D([1]) will marginalise out `:b, :c` and return a `KeyedMvNormal`
+             - `D([:a])` or D[[1]] will marginalise out `:b, :c` and return a `KeyedMvNormal`
                over `:a`.
              - `D([:a, :b])` or `D[[1, 2]]` will marginalise out `:c` and return a
                `KeyedMvNormal` over `:a, :b`.
