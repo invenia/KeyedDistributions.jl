@@ -293,7 +293,7 @@ for f in (:logpdf, :quantile, :mgf, :cf)
     @eval Distributions.$f(d::KeyedDistribution{<:Univariate}, x) = $f(distribution(d), x)
 end
 
-for f in (:minimum, :maximum, :modes, :mode, :skewness, :kurtosis)
+for f in (:mean, :var, :minimum, :maximum, :modes, :mode, :skewness, :kurtosis)
     @eval Distributions.$f(d::KeyedDistribution{<:Univariate}) = $f(distribution(d))
 end
 
