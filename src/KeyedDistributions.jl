@@ -121,7 +121,7 @@ function Base.getindex(d::KeyedMvNormal, i::Vector)::KeyedMvNormal
 end
 
 function Base.getindex(d::KeyedMvNormal, i::Integer)::KeyedDistribution
-    return KeyedDistribution(Normal(d.d.μ[i], d.d.Σ[i, i]), [axiskeys(d)[1][i]])
+    return KeyedDistribution(Normal(d.d.μ[i], sqrt(d.d.Σ[i, i])), [axiskeys(d)[1][i]])
 end
 
 function Base.getindex(d::KeyedGenericMvTDist, i::Vector)::KeyedGenericMvTDist
