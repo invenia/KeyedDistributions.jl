@@ -35,11 +35,13 @@ for T in (:Distribution, :Sampleable)
         The length of each key vector in must match the length along each dimension.
 
         !!! note
-            For distributions that can be marginalized exactly, the $($KeyedT) can be
+            For distributions that can be marginalised exactly, the $($KeyedT) can be
             marginalised via the indexing or lookup syntax just like `KeyedArray`s.
             i.e. One can use square or round brackets to retain certain indices or keys and
             marginalise out the others. For example for `D::KeyedMvNormal` over `:a, :b, :c`:
-             - `D(:a)` or D(1) will marginalise out `:b, :c` and return a `KeyedMvNormal`
+             - `D(:a)` or D(1) will marginalise out `:b, :c` and return a `KeyedNormal`
+               over `:a`.
+             - `D([:a])` or D([1]) will marginalise out `:b, :c` and return a `KeyedMvNormal`
                over `:a`.
              - `D([:a, :b])` or `D[[1, 2]]` will marginalise out `:c` and return a
                `KeyedMvNormal` over `:a, :b`.
@@ -341,7 +343,7 @@ end
 
 Distributions.components(kd::KeyedMixtureModel) = Distributions.components(kd.d)
 
-function (mm::KeyedMixtureModel)(keys...) 
+function (mm::KeyedMixtureModel)(keys...)
     margcomps = map(Distributions.components(mm)) do c
         inds = first(map(AxisKeys.findindex, keys, axiskeys(mm)))
         _marginalize(c, inds)
