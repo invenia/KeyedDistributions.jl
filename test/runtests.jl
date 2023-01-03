@@ -205,6 +205,8 @@ using Test
             @test entropy(kd) == entropy(d) ≈ -0.1904993792294276
             @test entropy(kd, 2) == entropy(d, 2) ≈ -0.27483250970672124
 
+            @test mean(kd) == mean(d) == 0.5
+            @test var(kd) == var(d) ≈ 0.04
             @test minimum(kd) == minimum(d) == -Inf
             @test maximum(kd) == maximum(d) == Inf
             @test modes(kd) == modes(d) == [0.5]
