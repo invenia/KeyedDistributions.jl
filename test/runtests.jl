@@ -205,6 +205,8 @@ using Test
             @test entropy(kd) == entropy(d) ≈ -0.1904993792294276
             @test entropy(kd, 2) == entropy(d, 2) ≈ -0.27483250970672124
 
+            @test mean(kd) == mean(d) == 0.5
+            @test var(kd) == var(d) ≈ 0.04
             @test minimum(kd) == minimum(d) == -Inf
             @test maximum(kd) == maximum(d) == Inf
             @test modes(kd) == modes(d) == [0.5]
@@ -326,7 +328,11 @@ using Test
             @test d([:a, :c]) == d[[1, 3]] == d13
 
             @test d([:a]) == d[[1]] == KeyedDistribution(MvNormal(m[[1]], s[[1], [1]]); id=[:a])
-            @test d(:a) == d[1] == KeyedDistribution(Normal(m[1], s[1, 1]), [:a])
+            @test d(:a) == d[1] == KeyedDistribution(Normal(m[1], sqrt(s[1, 1])), [:a])
+
+            # Ensure correct variance when returning a KeyedNormal
+            # https://github.com/invenia/KeyedDistributions.jl/issues/49
+            @test var(d(:a)) == s[1, 1]
         end
 
         @testset "KeyedMvNormal constructed without named keys" begin
@@ -337,7 +343,11 @@ using Test
             @test d([1, 3]) == d[[1, 3]] == d13
 
             @test d([1]) == d[[1]] == KeyedDistribution(MvNormal(m[[1]], s[[1], [1]]), [1])
-            @test d(1) == d[1] == KeyedDistribution(Normal(m[1], s[1, 1]), [1])
+            @test d(1) == d[1] == KeyedDistribution(Normal(m[1], sqrt(s[1, 1])), [1])
+
+             # Ensure correct variance when returning a KeyedNormal
+            # https://github.com/invenia/KeyedDistributions.jl/issues/49
+            @test var(d(1)) == s[1, 1]
         end
 
 
