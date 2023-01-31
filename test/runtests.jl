@@ -404,6 +404,9 @@ using Test
             @test mean(d[[2]]) == mean(mm[[2]])
             @test cov(d[[2]]) == cov(mm[[2]])
             @test mm isa MixtureModelLike
+            @test probs(mm) == pri
+            @test ncomponents(mm) == 2
+            @test components(mm) == [d, d]
         end
 
         @testset "Mixture of KeyedMvTDist{AbstractArray, PDMats}" begin
