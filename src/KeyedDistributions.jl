@@ -214,6 +214,12 @@ Distributions.sampler(d::KeyedDistribution) = sampler(distribution(d))
 
 Distributions.params(d::KeyedDistOrSampleable) = params(distribution(d))
 
+Distributions.probs(d::KeyedMixtureModel) = probs(distribution(d))
+
+Distributions.components(d::KeyedMixtureModel) = components(distribution(d))
+
+Distributions.ncomponents(d::KeyedMixtureModel) = ncomponents(distribution(d))
+
 Base.eltype(d::KeyedDistribution) = eltype(distribution(d))
 
 function Distributions._logpdf(d::KeyedDistribution, x::AbstractArray)
@@ -340,8 +346,6 @@ function KeyedDistribution(
 )
     return KeyedDistribution(kd.d, keys)
 end
-
-Distributions.components(kd::KeyedMixtureModel) = Distributions.components(kd.d)
 
 function (mm::KeyedMixtureModel)(keys...)
     margcomps = map(Distributions.components(mm)) do c
